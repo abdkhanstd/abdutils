@@ -230,9 +230,7 @@ import abdutils as abd
 line_to_write = "Looped line"
 counter = 0
 while counter < 3:
-   
-
- abd.WriteFile("looped_file.txt", line_to_write)
+    abd.WriteFile("looped_file.txt", line_to_write, 'a')
     counter += 1
 # Writes "Looped line" to 'looped_file.txt' three times in append mode.
 ```
