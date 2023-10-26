@@ -162,7 +162,7 @@ while line:
 import abdutils as abd
 
 file_path = "sample.txt"
-for line in abd.ReadLines(file_path):
+for line in abd.ReadFile(file_path):
     print(line)
 # Reads and prints all lines of 'sample.txt' using a for loop.
 ```
