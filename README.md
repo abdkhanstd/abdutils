@@ -217,8 +217,9 @@ import abdutils as abd
 
 lines_to_write = ["Line 1", "Line 2", "Line 3"]
 for line in lines_to_write:
-    abd.WriteFile("looped_file.txt", line)
-# Writes each line to 'looped_file.txt' in append mode.
+    abd.WriteFile("looped_file.txt", line, mode="a")
+# Overwrites the file 'looped_file.txt' with each line.
+
 ```
 
 ##### Example 5: Write Lines in a Loop (while)
