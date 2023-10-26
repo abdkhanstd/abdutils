@@ -7,5 +7,5 @@ setup(
     author='ABD',
     author_email='abdkhan@163.com',
     url='https://github.com/abdkhanstd/abdutils',
-    packages=['abdutils'],
+    packages=['abdutils'],  # Specify the package name, not the module name
 )
