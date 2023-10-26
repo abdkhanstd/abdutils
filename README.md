@@ -216,21 +216,10 @@ import abdutils as abd
 file_path = "sample.txt"
 line = abd.ReadFile(file_path)
 
-while line:
+while line is not None:
     print(line)
     line = abd.ReadFile(file_path)
-# Reads and prints all lines of 'sample.txt' using a while loop.
-```
-
-##### Example 5: Read Lines in a Loop (for)
-
-```python
-import abdutils as abd
-
-file_path = "sample.txt"
-for line in abd.ReadFile(file_path):
-    print(line)
-# Reads and prints all lines of 'sample.txt' using a for loop.
+# Reads and prints all lines of 'abdutils.py' using a while loop.
 ```
 
 ## WriteFile
