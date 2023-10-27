@@ -556,65 +556,7 @@ def GetImageSize(image, method='auto'):
         HandleError(msg,caller_filename, caller_line)
         return 0, 0, 0
 
-def GetImageSize(image, method='auto'):
 
-    """
-    Get the size (width, height) of an image.
-
-    Args:
-        image (PIL.Image.Image or numpy.ndarray): The input image.
-        method (str): The method to use for reading the image ('auto', 'PIL', or 'CV2').
-                      Defaults to 'auto' which automatically detects the input type.
-
-    Returns:
-        tuple: A tuple containing the width and height of the image.
-
-    Raises:
-        ValueError: If an unsupported method is specified.
-
-    Example:
-        # Get the size of an image using the default 'auto' method
-        width, height = GetImageSize(image)
-
-        # Get the size of an image using the 'PIL' method
-        width, height = GetImageSize(image, method='PIL')
-
-        # Get the size of an image using the 'CV2' method
-        width, height = GetImageSize(image, method='CV2')
-    """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename        
-    try:
-
-        if method == 'auto':
-            if isinstance(image, Image.Image):
-                return image.size
-            elif isinstance(image, np.ndarray):
-                return image.shape[1], image.shape[0]
-            else:
-                msg="Unsupported image type for automatic detection."
-                HandleError(msg,caller_filename, caller_line)
-        elif method == 'PIL':
-            if isinstance(image, Image.Image):
-                return image.size
-            else:
-                msg="Unsupported image type for 'PIL' method. Please provide a PIL Image."
-                HandleError(msg,caller_filename, caller_line)
-        elif method == 'CV2':
-            if isinstance(image, np.ndarray):
-                return image.shape[1], image.shape[0]
-            else:
-                msg="Unsupported image type for 'CV2' method. Please provide a numpy array (cv2 image)."
-                HandleError(msg,caller_filename, caller_line)
-        else:
-            msg=f"Unsupported method: {method}. Please use 'auto', 'PIL', or 'CV2'."
-            HandleError(msg,caller_filename, caller_line)
-
-    except Exception as e:
-        msg=f"Error getting image size: {str(e)}"
-        HandleError(msg,caller_filename, caller_line)
-        return None
 
 
 def ResizeImage(image, size, verbose=True):
@@ -755,13 +697,7 @@ def SharpenImage(image, factor=2.0, verbose=True):
     except Exception as e:
         msg=f"{e}"
         HandleError(msg,caller_filename, caller_line)          
-        exit(1)
-
-
-import sys
-import cv2
-import numpy as np
-from PIL import Image
+        
 
 def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, verbose=True):
     """
@@ -837,13 +773,6 @@ def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, ve
     except Exception as e:
         msg = f"{e}"
         HandleError(msg, caller_filename, caller_line)
-
-
-def HandleError(msg, caller_filename, caller_line):
-    print(f"[Error: {caller_filename}, line {caller_line}] " + msg)
-    exit(0)
-
-
 
 def ConvolveImage(image, kernel, verbose=True):
     """
