@@ -89,6 +89,11 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 ## Table of Contents
 - [CreateFolder](#createfolder)
 - [ReadFile](#readfile)
+- [ReadFile](#readfile)
+- [ReadFile](#readfile)
+- [ReadFile](#readfile)
+- [ReadFile](#readfile)
+- [ReadFile](#readfile)
 - [WriteFile](#writefile)
 - [ReadImage](#readimage-function))
 - [SaveImage](#saveimage-function)
@@ -177,6 +182,115 @@ import abdutils as abd
 abd.CreateFolder("folder_to_ask_user", mode="a", verbose=True)
 # User will be prompted for input.
 ```
+
+## RenameFileFolder
+
+Rename a file or folder.
+
+### Function Signature
+
+```python
+RenameFileFolder(old_path, new_path, verbose=True)
+```
+
+### Examples
+
+##### Example 1: Rename a file
+
+```python
+import abdutils as abd
+
+abd.RenameFileFolder("old_filename.txt", "new_filename.txt", verbose=True)
+# Expected Output: Info: File 'old_filename.txt' renamed to 'new_filename.txt'.
+```
+
+##### Example 2: Rename a folder
+
+```python
+import abdutils as abd
+
+abd.RenameFileFolder("old_folder", "new_folder", verbose=True)
+# Expected Output: Info: Folder 'old_folder' renamed to 'new_folder'.
+```
+
+---
+
+## CopyFile
+
+Copy a file from one location to another.
+
+### Function Signature
+
+```python
+CopyFile(source, destination, verbose=True)
+```
+
+### Examples
+
+##### Example 1: Copy a file
+
+```python
+import abdutils as abd
+
+abd.CopyFile("source_file.txt", "destination_folder/destination_file.txt", verbose=True)
+# Expected Output: Info: File 'source_file.txt' copied to 'destination_folder/destination_file.txt'.
+```
+
+---
+
+## MoveFile
+
+Move a file from one location to another.
+
+### Function Signature
+
+```python
+MoveFile(source, destination, verbose=True)
+```
+
+### Examples
+
+##### Example 1: Move a file to a new directory
+
+```python
+import abdutils as abd
+
+abd.MoveFile("source_file.txt", "destination_folder/", verbose=True)
+# Expected Output: Info: File 'source_file.txt' moved to 'destination_folder/'.
+```
+
+---
+
+## DeleteFileFolder
+
+Delete a file or folder.
+
+### Function Signature
+
+```python
+DeleteFileFolder(path, verbose=True)
+```
+
+### Examples
+
+##### Example 1: Delete a file
+
+```python
+import abdutils as abd
+
+abd.DeleteFileFolder("file_to_delete.txt", verbose=True)
+# Expected Output: Info: File 'file_to_delete.txt' deleted.
+```
+
+##### Example 2: Delete a folder
+
+```python
+import abdutils as abd
+
+abd.DeleteFileFolder("folder_to_delete", verbose=True)
+# Expected Output: Info: Folder 'folder_to_delete' deleted.
+```
+
 
 ## ReadFile
 
