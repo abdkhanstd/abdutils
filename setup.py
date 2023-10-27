@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='abdutils',
@@ -7,5 +7,6 @@ setup(
     author='ABD',
     author_email='abdkhan@163.com',
     url='https://github.com/abdkhanstd/abdutils',
-    packages=['abdutils'],  # Specify the package name, not the module name
+    packages=find_packages(),  # Automatically find all packages in the directory
+    py_modules=['abdutils.abdutils'],  # Specify the main module (Python file) to be included
 )
