@@ -14,6 +14,27 @@ from PIL import Image
 import os
 import glob
 
+def check_required_args(**kwargs):
+    """
+    Checks if any of the required arguments are missing or None.
+    
+
+    Args:
+        **kwargs: Keyword arguments where key is the argument name and value is its value.
+
+    Returns:
+        List of missing argument names or an empty list if all are provided.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    missing_args = [arg_name for arg_name, arg_value in kwargs.items() if arg_value is None]
+    if missing_args:
+        HandleError("Missing argument. Please see examples", caller_filename, caller_line)
+    return missing_args
+
+
 def ReadDirectoryContents(path_pattern, verbose=True):
     """
     Reads the contents of a directory based on the provided pattern and returns a list of matched items.
@@ -160,9 +181,6 @@ def RenameFileFolder(src_pattern, dest_name, verbose=True):
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
-
-import os
-import shutil
 
 def DeleteFileFolder(path, verbose=True):
     """
@@ -319,6 +337,7 @@ def WriteFile(file_path, lines):
     Returns:
         None
     """
+    check_required_args(**kwargs)
     caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
     caller_line = caller_frame.f_lineno  # Get the caller's line number
     caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename       
