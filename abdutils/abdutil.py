@@ -60,7 +60,8 @@ def CopyFile(src_pattern, dest_folder, verbose=True):
         
         if not matched_files:
             if verbose:
-                print(f"No files found matching the pattern '{src_pattern}'.")
+                msg=f"No files found matching the pattern '{src_pattern}'."
+                HandleError(msg, caller_filename, caller_line)
             return
 
         CreateFolder(dest_folder, mode="f", verbose=verbose)
@@ -108,7 +109,8 @@ def MoveFile(src_pattern, dest_folder, verbose=True):
         
         if not matched_files:
             if verbose:
-                print(f"No files found matching the pattern '{src_pattern}'.")
+                msg=f"No files found matching the pattern '{src_pattern}'."
+                HandleError(msg, caller_filename, caller_line)
             return
 
         CreateFolder(dest_folder, mode="f", verbose=verbose)
@@ -139,7 +141,8 @@ def RenameFileFolder(src_pattern, dest_name, verbose=True):
         
         if not matched_files_folders:
             if verbose:
-                print(f"No files or folders found matching the pattern '{src_pattern}'.")
+                msg=f"No files or folders found matching the pattern '{src_pattern}'."
+                HandleError(msg, caller_filename, caller_line)
             return
         
         if len(matched_files_folders) > 1:
@@ -177,7 +180,8 @@ def DeleteFileFolder(path, verbose=True):
         # Check if the path exists
         if not os.path.exists(path):
             if verbose:
-                print(f"Path '{path}' does not exist.")
+                msg=f"Path '{path}' does not exist."
+                HandleError(msg, caller_filename, caller_line)
             return
 
         # If it's a file, delete it
