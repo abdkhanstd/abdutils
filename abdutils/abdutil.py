@@ -15,6 +15,53 @@ import sys
 from PIL import Image
 
 
+def DeleteFolder(path, mode="a", verbose=True):
+    """
+    Delete a folder with the given path using one of the following modes:
+
+    - 'f' (force_delete): Deletes the folder without any prompts.
+    - 'a' (ask_user): Asks the user whether to delete the folder or just pass if the folder exists.
+
+    Args:
+        path (str): The path to the folder to be deleted.
+        mode (str): The mode for folder deletion ('f' or 'a'). Defaults to 'a' (ask_user).
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    try:
+        if not os.path.exists(path):
+            if verbose:
+                print(f"Info: The folder '{path}' does not exist. No action needed.")
+            return
+
+        if mode == "f":
+            if verbose:
+                print(f"Info: Deleting the folder '{path}' without prompt.")
+            shutil.rmtree(path)
+            
+        elif mode == "a":
+            user_input = input(f"The folder '{path}' exists. Do you want to delete it? (y/n): ")
+            if user_input.lower() == "y":
+                if verbose:
+                    print(f"Info: Deleting the folder '{path}'.")
+                shutil.rmtree(path)
+            else:
+                if verbose:
+                    print("Folder deletion aborted.")
+        else:
+            msg = f"Invalid mode '{mode}'. Please use 'f' (force_delete) or 'a' (ask_user)."
+            HandleError(msg, caller_filename, caller_line)
+
+    except PermissionError as pe:
+        msg = f"Error: Permission denied to delete the folder '{path}' (Occurred in {caller_filename}, line {caller_line})"
+        HandleError(msg, caller_filename, caller_line)
+    except Exception as e:
+        msg = f"Error: {str(e)} (Occurred in {caller_filename}, line {caller_line})"
+        HandleError(msg, caller_filename, caller_line)
+
 def CreateFolder(path, mode="a", verbose=True):
     """
     Create a folder with the given path using one of the following modes:
