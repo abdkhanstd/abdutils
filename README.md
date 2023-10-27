@@ -88,11 +88,10 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 
 ## Table of Contents
 - [CreateFolder](#createfolder)
-- [ReadFile](#readfile)
-- [ReadFile](#readfile)
-- [ReadFile](#readfile)
-- [ReadFile](#readfile)
-- [ReadFile](#readfile)
+- [RenameFileFolder](#renamefilefolder)
+- [CopyFile](#copyfile)
+- [MoveFile](#movefile)
+- [DeleteFileFolder](#deletefilefolder)
 - [ReadFile](#readfile)
 - [WriteFile](#writefile)
 - [ReadImage](#readimage-function))
