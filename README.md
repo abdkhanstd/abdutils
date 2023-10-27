@@ -89,9 +89,9 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 ## Table of Contents
 - [CreateFolder](#createfolder)
 - [RenameFileFolder](#renamefilefolder)
-- [CopyFile](#copyfile)
-- [MoveFile](#movefile)
-- [DeleteFileFolder](#deletefilefolder)
+- [Copy](#copy)
+- [Move](#move)
+- [Delete](#deletefilefolder)
 - [ReadFile](#readfile)
 - [WriteFile](#writefile)
 - [ReadImage](#readimage-function))
@@ -218,82 +218,252 @@ abd.RenameFileFolder("old_folder", "new_folder", verbose=True)
 
 ---
 
-## CopyFile
+## Copy
 
-Copy a file from one location to another.
-
-### Function Signature
-
-```python
-CopyFile(source, destination, verbose=True)
-```
-
-### Examples
-
-##### Example 1: Copy a file
-
-```python
-import abdutils as abd
-
-abd.CopyFile("source_file.txt", "destination_folder/destination_file.txt", verbose=True)
-# Expected Output: Info: File 'source_file.txt' copied to 'destination_folder/destination_file.txt'.
-```
-
----
-
-## MoveFile
-
-Move a file from one location to another.
+The `Copy` function allows you to copy files based on a source pattern to a destination folder or filename.
 
 ### Function Signature
 
 ```python
-MoveFile(source, destination, verbose=True)
+Copy(src_pattern=None, dest_path=None, verbose=True)
 ```
 
-### Examples
+- `src_pattern` (str): The source file pattern. Supports regular expressions like '/path/to/files/*.txt'.
+- `dest_path` (str): The destination path including both folder and filename.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
 
-##### Example 1: Move a file to a new directory
+#### Examples
+
+##### Example 1: Copy a file to a destination folder with verbose messages
 
 ```python
 import abdutils as abd
 
-abd.MoveFile("source_file.txt", "destination_folder/", verbose=True)
-# Expected Output: Info: File 'source_file.txt' moved to 'destination_folder/'.
+abd.Copy("source_file.txt", "destination_folder/destination_file.txt", verbose=True)
+# Expected Output: Copied 'source_file.txt' to 'destination_folder/destination_file.txt'.
 ```
 
----
+##### Example 2: Copy files matching a pattern to a destination folder
 
-## DeleteFileFolder
+```python
+import abdutils as abd
 
-Delete a file or folder.
+abd.Copy("files_to_copy/*.txt", "destination_folder/", verbose=True)
+# Expected Output: Multiple 'Copied' messages for each file copied.
+```
+
+##### Example 3: Copy files matching a pattern to a specified filename
+
+```python
+import abdutils as abd
+
+abd.Copy("files_to_copy/*.txt", "destination_folder/specific_file.txt", verbose=True)
+# Expected Output: Copied each matched file to 'destination_folder/specific_file.txt'.
+```
+
+##### Example 4: Copy files matching a pattern to a non-existent destination folder
+
+```python
+import abdutils as abd
+
+abd.Copy("files_to_copy/*.txt", "non_existent_folder/", verbose=True)
+# Expected Output: Created 'non_existent_folder/' and copied matched files to it.
+```
+
+##### Example 5: Copy files matching a pattern to a non-existent destination folder without verbose messages
+
+```python
+import abdutils as abd
+
+abd.Copy("files_to_copy/*.txt", "non_existent_folder/", verbose=False)
+# No output if the folder doesn't exist; Files are copied silently.
+```
+
+## Move
+
+The `Move` function allows you to move (cut and paste) files based on a source pattern to a destination path.
 
 ### Function Signature
 
 ```python
-DeleteFileFolder(path, verbose=True)
+Move(src_pattern=None, dest_path=None, verbose=True)
 ```
 
-### Examples
+- `src_pattern` (str): The source file pattern.
+- `dest_path` (str): The destination path.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
 
-##### Example 1: Delete a file
+#### Examples
+
+##### Example 1: Move a file to a destination folder with verbose messages
 
 ```python
 import abdutils as abd
 
-abd.DeleteFileFolder("file_to_delete.txt", verbose=True)
-# Expected Output: Info: File 'file_to_delete.txt' deleted.
+abd.Move("source_file.txt", "destination_folder/destination_file.txt", verbose=True)
+# Expected Output: Moved 'source_file.txt' to 'destination_folder/destination_file.txt'.
 ```
 
-##### Example 2: Delete a folder
+##### Example 2: Move files matching a pattern to a destination folder
 
 ```python
 import abdutils as abd
 
-abd.DeleteFileFolder("folder_to_delete", verbose=True)
-# Expected Output: Info: Folder 'folder_to_delete' deleted.
+abd.Move("files_to_move/*.txt", "destination_folder/", verbose=True)
+# Expected Output: Multiple 'Moved' messages for each file moved.
 ```
 
+##### Example 3: Move files matching a pattern to a specified filename
+
+```python
+import abdutils as abd
+
+abd.Move("files_to_move/*.txt", "destination_folder/specific_file.txt", verbose=True)
+# Expected Output: Moved each matched file to 'destination_folder/specific_file.txt'.
+```
+
+##### Example 4: Move files matching a pattern to a non-existent destination folder
+
+```python
+import abdutils as abd
+
+abd.Move("files_to_move/*.txt", "non_existent_folder/", verbose=True)
+# Expected Output: Created 'non_existent_folder/' and moved matched files to it.
+```
+
+##### Example 5: Move files matching a pattern to a non-existent destination folder without verbose messages
+
+```python
+import abdutils as abd
+
+abd.Move("files_to_move/*.txt", "non_existent_folder/", verbose=False)
+# No output if the folder doesn't exist; Files are moved silently.
+```
+
+## Delete
+
+The `Delete` function allows you to delete files or folders based on the given path. It supports wildcard patterns.
+
+### Function Signature
+
+```python
+Delete(path=None, verbose=True)
+```
+
+- `path` (str): The path to the file or folder to be deleted. Supports wildcard patterns.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+#### Examples
+
+##### Example 1: Delete a single file
+
+```python
+import abdutils as abd
+
+# Delete a specific file with verbose messages
+abd.Delete("file_to_delete.txt", verbose=True)
+```
+
+##### Example 2: Delete a folder and its contents
+
+```python
+import abdutils as abd
+
+# Delete a folder and its contents with verbose messages
+abd.Delete("folder_to_delete/", verbose=True)
+```
+
+##### Example 3: Delete files using wildcard pattern
+
+```python
+import abdutils as abd
+
+# Delete all .txt files in the current directory with verbose messages
+abd.Delete("*.txt", verbose=True)
+```
+
+##### Example 4: Delete files using a nested folder path
+
+```python
+import abdutils as abd
+
+# Delete all .jpg files in a nested folder with verbose messages
+abd.Delete("parent_folder/nested_folder/*.jpg", verbose=True)
+```
+
+##### Example 5: Deleting non-existent files
+
+```python
+import abdutils as abd
+
+# Attempt to delete non-existent files with verbose messages
+abd.Delete("non_existent_file.txt", verbose=True)
+# Expected Output: No files/folders found matching the pattern 'non_existent_file.txt'.
+```
+
+##### Example 6: Deleting a symlink
+
+```python
+import abdutils as abd
+
+# Attempt to delete a symlink with verbose messages
+abd.Delete("symlink_to_file.txt", verbose=True)
+# Expected Output: Deleted 'symlink_to_file.txt' (unsupported path type).
+```
+
+These examples demonstrate how to use the `Delete` function to delete files and folders based on the provided path and support for wildcard patterns.
+
+## Rename
+
+The `Rename` function allows you to rename a file or folder based on the given source path and new name.
+
+### Function Signature
+
+```python
+Rename(src_path=None, new_name=None, verbose=True)
+```
+
+- `src_path` (str): The source path of the file or folder to be renamed.
+- `new_name` (str): The new name for the file or folder.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+#### Examples
+
+##### Example 1: Rename a file with a new name
+
+```python
+import abdutils as abd
+
+abd.Rename("old_filename.txt", "new_filename.txt", verbose=True)
+# Expected Output: Renamed 'old_filename.txt' to 'new_filename.txt'.
+```
+
+##### Example 2: Rename a folder with a new name
+
+```python
+import abdutils as abd
+
+abd.Rename("old_folder", "new_folder", verbose=True)
+# Expected Output: Renamed 'old_folder' to 'new_folder'.
+```
+
+##### Example 3: Rename a file or folder that does not exist
+
+```python
+import abdutils as abd
+
+abd.Rename("non_existent_file.txt", "new_name.txt", verbose=True)
+# Expected Output: [Error] [Errno 2] No such file or directory: 'non_existent_file.txt'.
+```
+
+##### Example 4: Rename a file or folder with verbose messages turned off
+
+```python
+import abdutils as abd
+
+abd.Rename("existing_file.txt", "new_name.txt", verbose=False)
+# No output if successful; Error message if the source path does not exist.
+```
 
 ## ReadFile
 
