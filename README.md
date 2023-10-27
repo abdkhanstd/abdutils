@@ -188,37 +188,7 @@ abd.CreateFolder("folder_to_ask_user", mode="a", verbose=True)
 # User will be prompted for input.
 ```
 
-## RenameFileFolder
 
-Rename a file or folder.
-
-### Function Signature
-
-```python
-RenameFileFolder(old_path, new_path, verbose=True)
-```
-
-### Examples
-
-##### Example 1: Rename a file
-
-```python
-import abdutils as abd
-
-abd.RenameFileFolder("old_filename.txt", "new_filename.txt", verbose=True)
-# Expected Output: Info: File 'old_filename.txt' renamed to 'new_filename.txt'.
-```
-
-##### Example 2: Rename a folder
-
-```python
-import abdutils as abd
-
-abd.RenameFileFolder("old_folder", "new_folder", verbose=True)
-# Expected Output: Info: Folder 'old_folder' renamed to 'new_folder'.
-```
-
----
 
 ## Copy
 
