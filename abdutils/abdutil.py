@@ -1,7 +1,4 @@
 __version__ = '0.1'
-
-
-
 import os
 import shutil
 import warnings
@@ -14,17 +11,44 @@ import inspect
 import sys
 from PIL import Image
 
+import os
+import glob
 
-def DeleteFolder(path, mode="a", verbose=True):
+def ReadDirectoryContents(path_pattern, verbose=True):
     """
-    Delete a folder with the given path using one of the following modes:
-
-    - 'f' (force_delete): Deletes the folder without any prompts.
-    - 'a' (ask_user): Asks the user whether to delete the folder or just pass if the folder exists.
+    Reads the contents of a directory based on the provided pattern and returns a list of matched items.
 
     Args:
-        path (str): The path to the folder to be deleted.
-        mode (str): The mode for folder deletion ('f' or 'a'). Defaults to 'a' (ask_user).
+        path_pattern (str): The path pattern to match files and directories. 
+                            For example: '/home/tt/*.jpg' or '/home/tt/*.*' or '/home/tt/'
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+
+    Returns:
+        list: A list of matched items based on the provided pattern.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    try:
+        matched_items = glob.glob(path_pattern)
+        if verbose:
+            print(f"Found {len(matched_items)} items matching the pattern '{path_pattern}'.")
+
+        return matched_items
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
+        return []
+
+
+def CopyFile(src_pattern, dest_folder, verbose=True):
+    """
+    Copies files from the source pattern to the destination folder.
+
+    Args:
+        src_pattern (str): The source file pattern. Supports regular expressions like '/path/to/files/*.txt'.
+        dest_folder (str): The destination folder where files will be copied.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
     caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
@@ -32,35 +56,144 @@ def DeleteFolder(path, mode="a", verbose=True):
     caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
     
     try:
-        if not os.path.exists(path):
+        matched_files = glob.glob(src_pattern)
+        
+        if not matched_files:
             if verbose:
-                print(f"Info: The folder '{path}' does not exist. No action needed.")
+                print(f"No files found matching the pattern '{src_pattern}'.")
             return
 
-        if mode == "f":
-            if verbose:
-                print(f"Info: Deleting the folder '{path}' without prompt.")
-            shutil.rmtree(path)
-            
-        elif mode == "a":
-            user_input = input(f"The folder '{path}' exists. Do you want to delete it? (y/n): ")
-            if user_input.lower() == "y":
-                if verbose:
-                    print(f"Info: Deleting the folder '{path}'.")
-                shutil.rmtree(path)
-            else:
-                if verbose:
-                    print("Folder deletion aborted.")
-        else:
-            msg = f"Invalid mode '{mode}'. Please use 'f' (force_delete) or 'a' (ask_user)."
-            HandleError(msg, caller_filename, caller_line)
+        CreateFolder(dest_folder, mode="f", verbose=verbose)
 
-    except PermissionError as pe:
-        msg = f"Error: Permission denied to delete the folder '{path}' (Occurred in {caller_filename}, line {caller_line})"
-        HandleError(msg, caller_filename, caller_line)
+        for file_path in matched_files:
+            shutil.copy(file_path, dest_folder)
+            if verbose:
+                print(f"Copied '{file_path}' to '{dest_folder}'.")
+
     except Exception as e:
-        msg = f"Error: {str(e)} (Occurred in {caller_filename}, line {caller_line})"
-        HandleError(msg, caller_filename, caller_line)
+        HandleError(str(e), caller_filename, caller_line)
+
+
+def MoveFolder(original_path, new_path, verbose=True):
+    """Move a folder from the original path to the new path."""
+    caller_frame = sys._getframe(1)
+    caller_line = caller_frame.f_lineno
+    caller_filename = caller_frame.f_globals.get('__file__')
+    try:
+        folder = os.path.dirname(new_path)
+        CreateFolder(folder, mode="f")
+
+        shutil.move(original_path, new_path)
+        if verbose:
+            print(f"Folder '{original_path}' moved to '{new_path}'.")
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
+
+def MoveFile(src_pattern, dest_folder, verbose=True):
+    """
+    Moves files from the source pattern to the destination folder.
+
+    Args:
+        src_pattern (str): The source file pattern. Supports regular expressions like '/path/to/files/*.txt'.
+        dest_folder (str): The destination folder where files will be moved.
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    try:
+        matched_files = glob.glob(src_pattern)
+        
+        if not matched_files:
+            if verbose:
+                print(f"No files found matching the pattern '{src_pattern}'.")
+            return
+
+        CreateFolder(dest_folder, mode="f", verbose=verbose)
+
+        for file_path in matched_files:
+            shutil.move(file_path, dest_folder)
+            if verbose:
+                print(f"Moved '{file_path}' to '{dest_folder}'.")
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
+
+def RenameFileFolder(src_pattern, dest_name, verbose=True):
+    """
+    Renames a file or folder based on the provided source pattern.
+
+    Args:
+        src_pattern (str): The source file/folder pattern. Supports regular expressions like '/path/to/files/fileprefix*'.
+        dest_name (str): The new name for the file/folder.
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    try:
+        matched_files_folders = glob.glob(src_pattern)
+        
+        if not matched_files_folders:
+            if verbose:
+                print(f"No files or folders found matching the pattern '{src_pattern}'.")
+            return
+        
+        if len(matched_files_folders) > 1:
+            msg = f"Multiple files or folders matched the pattern '{src_pattern}'. Please be more specific."
+            HandleError(msg, caller_filename, caller_line)
+            return
+
+        src_path = matched_files_folders[0]
+        dest_path = os.path.join(os.path.dirname(src_path), dest_name)
+        
+        os.rename(src_path, dest_path)
+        
+        if verbose:
+            print(f"Renamed '{src_path}' to '{dest_path}'.")
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
+
+import os
+import shutil
+
+def DeleteFileFolder(path, verbose=True):
+    """
+    Deletes a file or a folder. If it's a folder, it will be deleted even if it's not empty.
+
+    Args:
+        path (str): The path to the file or folder to be deleted.
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+    """
+    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
+    caller_line = caller_frame.f_lineno  # Get the caller's line number
+    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    
+    try:
+        # Check if the path exists
+        if not os.path.exists(path):
+            if verbose:
+                print(f"Path '{path}' does not exist.")
+            return
+
+        # If it's a file, delete it
+        if os.path.isfile(path):
+            os.remove(path)
+            if verbose:
+                print(f"File '{path}' deleted successfully.")
+
+        # If it's a directory, delete it
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+            if verbose:
+                print(f"Folder '{path}' deleted successfully.")
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
 
 def CreateFolder(path, mode="a", verbose=True):
     """
