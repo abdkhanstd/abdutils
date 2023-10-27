@@ -87,10 +87,26 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 
 
 ## Table of Contents
-
 - [CreateFolder](#createfolder)
 - [ReadFile](#readfile)
 - [WriteFile](#writefile)
+- [ReadImage](#readimage-function))
+- [SaveImage](#saveimage-function)
+- [ConvertToGrayscale](#converttograyscale-function))
+- [ConvertToRGB](#converttorgb-function)
+- [CropImage](#cropimage-function)
+- [GetImageSize](#getimagesize-function)
+- [ResizeImage](#resizeimage-function)
+- [GaussianBlurImage](#gaussianblurimage-function)
+- [ConvertImageToGrayscale](#convertimagetograyscale-function)
+- [SharpenImage](#sharpenimage-function)
+- [DetectEdgesInImage](#detectedgesinimage-function)
+- [ConvolveImage](#convolveimage-function)
+- [ApplyFilter](#applyfilter-function)
+- [ShowImage](#showimage-function)
+- [CV2PIL](#cv2pil-function)
+- [PIL2CV2](#pil2cv2-function)
+
 
 ## CreateFolder
 
@@ -289,3 +305,935 @@ while counter < 3:
     counter += 1
 # Writes "Looped line" to 'looped_file.txt' three times in append mode.
 ```
+
+
+
+# ReadImage Function
+
+The `ReadImage` function is a Python utility for reading images from specified file paths. This function offers flexibility by allowing you to specify the desired image loading mode and method. It can load images using either the Pillow (PIL) library or OpenCV (cv2) library, depending on the method specified. Additionally, it performs checks on the image mode and handles various error scenarios gracefully.
+
+## Function Signature
+
+```python
+from abdutils import *
+def ReadImage(image_path, mode='RGB', method='auto'):
+```
+
+## Parameters
+
+- `image_path` (str): The path to the image file.
+- `mode` (str): The desired mode for loading the image ('RGB', 'L', etc.). Defaults to 'RGB'.
+- `method` (str): The method to use for loading the image ('auto', 'PIL', or 'CV2'). Defaults to 'auto'.
+
+## Returns
+
+- `PIL.Image.Image` or `numpy.ndarray`: The loaded image.
+
+## Error Handling
+
+The function includes error handling for various scenarios, such as invalid modes, unsupported methods, permission errors, and file not found errors. It gracefully handles these errors and provides informative error messages.
+
+### Examples
+
+#### Example 1: Load an RGB image using default settings
+
+```python
+from abdutils import *
+
+image = ReadImage("example.jpg")
+```
+
+In this example, the function loads an RGB image ("example.jpg") using the default settings, which use the Pillow library for image loading.
+
+#### Example 2: Load a grayscale image using OpenCV (cv2)
+
+```python
+from abdutils import *
+
+grayscale_image = ReadImage("example.png", mode='L', method='CV2')
+```
+
+This example loads a grayscale image ("example.png") using OpenCV (cv2) for image loading. The method is explicitly set to 'CV2'.
+
+#### Example 3: Handle an unsupported image format
+
+```python
+from abdutils import *
+
+unsupported_image = ReadImage("example.gif")
+```
+
+In this case, the function attempts to load an unsupported image format ("example.gif"). Since it's a GIF format and the method is set to 'auto', the function will use Pillow for loading.
+
+#### Example 4: Handle a file not found error
+
+```python
+from abdutils import *
+
+non_existent_image = ReadImage("non_existent.jpg")
+```
+
+This example demonstrates handling a file not found error. The function attempts to load an image ("non_existent.jpg") that doesn't exist in the specified path and will handle the error gracefully.
+
+#### Example 5: Handle a permission error
+
+```python
+from abdutils import *
+
+image_with_permission_error = ReadImage("protected.jpg")
+```
+
+In this example, the function attempts to open an image ("protected.jpg") but encounters a permission error due to restricted access. The function handles the permission error gracefully.
+
+These examples showcase the versatility of the `ReadImage` function, including loading images in different modes and handling various error scenarios. Customize the file paths and parameters according to your specific image loading requirements.
+
+
+## SaveImage Function
+
+The `SaveImage` function is a Python utility for saving images to a specified file path. This function provides flexibility in choosing the method for saving the image and handles various error scenarios gracefully.
+
+### Function Signature
+
+```python
+def SaveImage(image, save_path, method='auto'):
+```
+
+### Parameters
+
+- `image`: The image to be saved (PIL.Image.Image or numpy.ndarray).
+- `save_path`: The path where the image should be saved.
+- `method` (str): The method to use for saving the image ('auto', 'PIL', or 'CV2'). Defaults to 'auto'.
+
+### Returns
+
+- `True` if the image is saved successfully; `False` if there is an error.
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as unsupported image types, permission errors, and other exceptions. It gracefully handles these errors and provides informative error messages.
+
+### Examples
+
+#### Example 1: Save a PIL image using default settings
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Save the image using default 'auto' method
+result = abd.SaveImage(image, "output.jpg")
+if result:
+    print("Image saved successfully.")
+else:
+    print("Failed to save the image.")
+```
+
+In this example, the function saves a PIL image using the default 'auto' method, which detects the image type.
+
+#### Example 2: Save a numpy array (cv2 image) using explicit 'CV2' method
+
+```python
+import abdutils as abd
+
+# Load an image using cv2
+image = abd.ReadImage("input.png")
+
+# Save the image using 'CV2' method
+result = abd.SaveImage(image, "output.png", method='CV2')
+if result:
+    print("Image saved successfully.")
+else:
+    print("Failed to save the image.")
+```
+
+This example demonstrates saving a cv2 image using the 'CV2' method explicitly.
+
+## ConvertToGrayscale Function
+
+The `ConvertToGrayscale` function is a Python utility for converting images to grayscale. This function allows you to specify the method for conversion and supports both PIL and cv2 image types.
+
+### Function Signature
+
+```python
+def ConvertToGrayscale(image, method='auto'):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image or numpy.ndarray).
+- `method` (str): The method to use for conversion ('auto', 'PIL', or 'CV2'). Defaults to 'auto'.
+
+### Returns
+
+- Grayscale image (PIL.Image.Image or numpy.ndarray).
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as unsupported image types or formats, and provides informative error messages.
+
+### Examples
+
+#### Example 1: Convert an image to grayscale using the default 'auto' method
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Convert the image to grayscale using the default 'auto' method
+grayscale_image = abd.ConvertToGrayscale(image)
+
+# Display or further process the grayscale image
+```
+
+In this example, the function converts an image to grayscale using the default 'auto' method, which automatically detects the image type.
+
+#### Example 2: Convert an image to grayscale using the 'CV2' method
+
+```python
+import abdutils as abd
+
+# Load an image using cv2
+image = abd.ReadImage("input.png")
+
+# Convert the image to grayscale using the 'CV2' method
+grayscale_image = abd.ConvertToGrayscale(image, method='CV2')
+
+# Display or further process the grayscale image
+```
+
+This example explicitly converts a cv2 image to grayscale using the 'CV2' method.
+
+## ConvertToRGB Function
+
+The `ConvertToRGB` function is a Python utility that allows you to convert an image to the RGB color mode. This function supports both PIL (Pillow) and cv2 (OpenCV) image types and provides flexibility in choosing the conversion method.
+
+### Function Signature
+
+```python
+def ConvertToRGB(image, method='auto'):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image or numpy.ndarray).
+- `method` (str): The method to use for conversion ('auto', 'PIL', or 'CV2'). Defaults to 'auto'.
+
+### Returns
+
+- RGB image (PIL.Image.Image or numpy.ndarray).
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as unsupported image types, modes, or formats, and provides informative error messages.
+
+### Examples
+
+#### Example 1: Convert an image to RGB color mode using the default 'auto' method
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Convert the image to RGB color mode using the default 'auto' method
+rgb_image = abd.ConvertToRGB(image)
+
+# Display or further process the RGB image
+```
+
+In this example, the function converts an image to RGB color mode using the default 'auto' method, which automatically detects the image type and mode.
+
+#### Example 2: Convert a cv2 image to RGB using the 'CV2' method
+
+```python
+import abdutils as abd
+
+# Load an image 
+image = abd.ReadImage("input.png")
+
+# Convert the image to RGB color mode using the 'CV2' method
+rgb_image = abd.ConvertToRGB(image, method='CV2')
+
+# Display or further process the RGB image
+```
+
+This example explicitly converts an  image to RGB using the 'CV2' method.
+
+## CropImage Function
+
+The `CropImage` function is a Python utility for cropping a region of interest (ROI) from an image. It accepts a PIL (Pillow) image and a list of coordinates to define the cropping area.
+
+### Function Signature
+
+```python
+def CropImage(image, coordinates):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image).
+- `coordinates` (list): A list containing the left, top, right, and bottom coordinates.
+
+### Returns
+
+- Cropped image (PIL.Image.Image).
+
+### Error Handling
+
+The function includes error handling for cases where the input image or coordinates are invalid, and it provides informative error messages.
+
+### Example
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Define the coordinates for cropping [left, top, right, bottom]
+crop_coordinates = [0, 0, 50, 50]
+
+# Crop a region of interest from the image
+cropped_image = abd.CropImage(image, crop_coordinates)
+
+# Display or further process the cropped image
+```
+
+In this example, the function crops a region of interest from the input image based on the specified coordinates.
+
+## GetImageSize Function
+
+The `GetImageSize` function is a Python utility that allows you to retrieve the size (width and height) of an image. This function supports both PIL (Pillow) and cv2 (OpenCV) image types and provides flexibility in choosing the method for reading the image size.
+
+### Function Signature
+
+```python
+def GetImageSize(image, method='auto'):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image or numpy.ndarray).
+- `method` (str): The method to use for reading the image ('auto', 'PIL' for Pillow, 'CV2' for OpenCV).
+                      Defaults to 'auto'.
+
+### Returns
+
+- A tuple containing the width and height of the image.
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as unsupported image types or methods, and provides informative error messages.
+
+### Examples
+
+#### Example 1: Get the size of an image using the default 'auto' method
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Get the size of the image using the default 'auto' method
+width, height = abd.GetImageSize(image)
+
+# Display or further process the image size
+```
+
+In this example, the function retrieves the size of an image using the default 'auto' method, which automatically detects the image type.
+
+#### Example 2: Get the size of a cv2 image using the 'CV2' method
+
+```python
+
+import abdutils as abd
+
+# Load an image using cv2
+image = abd.ReadImage("input.png")
+
+# Get the size of the cv2 image using the 'CV2' method
+width, height = abd.GetImageSize(image, method='CV2')
+
+# Display or further process the image size
+```
+
+This example explicitly retrieves the size of a cv2 image using the 'CV2' method.
+
+## ResizeImage Function
+
+The `ResizeImage` function is a Python utility that allows you to resize an image to the specified size while preserving the aspect ratio. This function utilizes the Pillow (PIL) library to perform the resizing.
+
+### Function Signature
+
+```python
+def ResizeImage(image, size, verbose=True):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image).
+- `size` (tuple): The target size (width, height).
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- The resized image (PIL.Image.Image).
+
+### Error Handling
+
+The function includes error handling for scenarios where the input image is not a PIL Image object or the size parameter is not a valid tuple of two integers.
+
+### Examples
+
+#### Example 1: Resize an image to a specific size
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Resize the image to the specified size while preserving the aspect ratio
+resized_image = abd.ResizeImage(image, (300, 200))
+
+# Display or further process the resized image
+```
+
+In this example, the function resizes the input image to a width of 300 pixels and a height of 200 pixels while preserving the aspect ratio.
+
+#### Example 2: Resize an image without displaying verbose messages
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Resize the image to the specified size without displaying verbose messages
+resized_image = abd.ResizeImage(image, (640, 480), verbose=False)
+
+# Display or further process the resized image
+```
+
+This example resizes the image to a width of 640 pixels and a height of 480 pixels without displaying verbose messages.
+
+## GaussianBlurImage Function
+
+The `GaussianBlurImage` function is a Python utility for applying Gaussian blur to an image. This function utilizes the Pillow (PIL) library to perform the blurring operation.
+
+### Function Signature
+
+```python
+def GaussianBlurImage(image, sigma=1.0, verbose=True):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image).
+- `sigma` (float): The standard deviation of the Gaussian kernel.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- The blurred image (PIL.Image.Image).
+
+### Error Handling
+
+The function includes error handling for scenarios where the input image is not a PIL Image object or the sigma parameter is not a positive number.
+
+### Example
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = abd.ReadImage("input.jpg")
+
+# Apply Gaussian blur to the image with a specified sigma value
+blurred_image = abd.GaussianBlurImage(image, sigma=2.0)
+
+# Display or further process the blurred image
+```
+
+In this example, the function applies Gaussian blur to the input image with a sigma value of 2.0.
+
+## ConvertImageToGrayscale Function
+
+The `ConvertImageToGrayscale` function is a Python utility that allows you to convert a color image to grayscale. This function utilizes the Pillow (PIL) library to perform the conversion.
+
+### Function Signature
+
+```python
+def ConvertImageToGrayscale(image, verbose=True):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image).
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- The grayscale image (PIL.Image.Image).
+
+### Error Handling
+
+The function includes error handling for scenarios where the input image is not a PIL Image object.
+
+### Example
+
+```python
+
+import abdutils as abd
+
+# Load a color image
+image = Image.open("color_image.jpg")
+
+# Convert the color image to grayscale
+grayscale_image = abd.ConvertImageToGrayscale(image)
+
+# Display or further process the grayscale image
+```
+
+In this example, the function converts a color image to grayscale.
+
+## SharpenImage Function
+
+The `SharpenImage` function is a Python utility for sharpening an image. This function utilizes the Pillow (PIL) library to perform the sharpening operation.
+
+### Function Signature
+
+```python
+def SharpenImage(image, factor=2.0, verbose=True):
+```
+
+### Parameters
+
+- `image`: The input image (PIL.Image.Image).
+- `factor` (float): The sharpening factor.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- The sharpened image (PIL.Image.Image).
+
+### Error Handling
+
+The function includes error handling for scenarios where the input image is not a PIL Image object or the factor parameter is not a positive number.
+
+### Example
+
+```python
+
+import abdutils as abd
+
+# Load an image
+image = Image.open("input_image.jpg")
+
+# Sharpen the image with a specified factor
+sharpened_image = abd.SharpenImage(image, factor=1.5)
+
+# Display or further process the sharpened image
+```
+
+In this example, the function sharpens the input image with a factor of 1.5.
+
+Feel free to customize the file paths, parameters, and examples according to your specific image processing needs.
+
+# DetectEdgesInImage Function
+
+The `DetectEdgesInImage` function is a Python utility for detecting edges in an image using various edge detection methods. It provides flexibility in choosing the edge detection method and offers customizable threshold values for the Canny edge detection method. This function supports both Pillow (PIL) and NumPy image types.
+
+## Function Signature
+
+```python
+def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, verbose=True):
+```
+
+### Parameters
+
+- `image` (PIL.Image.Image or numpy.ndarray): The input image.
+- `method` (str): The edge detection method to use ('canny', 'sobel', 'laplacian', 'prewitt', or 'scharr'). Defaults to 'canny'.
+- `threshold1` (int): The first threshold for the hysteresis procedure (only for the 'canny' method). Defaults to 100.
+- `threshold2` (int): The second threshold for the hysteresis procedure (only for the 'canny' method). Defaults to 200.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- `PIL.Image.Image`: The edge-detected image.
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as checking if the input image is a valid PIL Image object and validating threshold values for the Canny method. It gracefully handles these errors and provides informative error messages.
+
+### Examples
+
+#### Example 1: Detect edges using the default Canny method
+
+```python
+import abdutils as abd
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Detect edges using the default Canny method
+edge_image = abd.DetectEdgesInImage(image)
+
+# Show the edge-detected image
+abd.ShowImage(edge_image)
+
+# Display or further process the edge-detected image
+```
+
+In this example, the function detects edges in an image using the default Canny edge detection method and displays the edge-detected image using `abd.ShowImage`.
+
+#### Example 2: Detect edges using the Sobel method
+
+```python
+import abdutils as abd
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Detect edges using the Sobel method
+edge_image = abd.DetectEdgesInImage(image, method='sobel')
+
+# Show the edge-detected image
+abd.ShowImage(edge_image)
+
+# Display or further process the edge-detected image
+```
+
+This example explicitly uses the Sobel edge detection method to detect edges in an image and displays the edge-detected image using `abd.ShowImage`.
+
+#### Example 3: Detect edges using custom Canny thresholds and without verbose messages
+
+```python
+import abdutils as abd
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Detect edges using custom Canny thresholds and disable verbose messages
+edge_image = abd.DetectEdgesInImage(image, threshold1=50, threshold2=150, verbose=False)
+
+# Show the edge-detected image
+abd.ShowImage(edge_image)
+
+# Display or further process the edge-detected image
+```
+
+In this example, the function uses custom threshold values for the Canny method, disables verbose messages during edge detection, and displays the edge-detected image using `abd.ShowImage`.
+
+#### Example 4: Handle an unsupported edge detection method
+
+```python
+import abdutils as abd
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Attempt to detect edges using an unsupported method
+edge_image = abd.DetectEdgesInImage(image, method='unsupported_method')
+
+# Error message will be displayed, and edge_image will be None
+```
+
+This example demonstrates handling an unsupported edge detection method, which will result in an error message.
+
+#### Example 5: Handle errors gracefully
+
+```python
+import abdutils as abd
+
+# Read an invalid image (not a PIL Image object)
+image = "invalid_image.jpg"
+
+# Attempt to detect edges
+edge_image = abd.DetectEdgesInImage(image)
+
+# Error message will be displayed, and edge_image will be None
+```
+
+In this case, the function attempts to detect edges in an invalid image (not a PIL Image object) and handles the error gracefully.
+
+These examples demonstrate the versatility of the `DetectEdgesInImage` function, including choosing different edge detection methods, customizing threshold values, and displaying the edge-detected image using `abd.ShowImage`. Customize the file paths and parameters according to your specific edge detection requirements.
+
+
+You can adjust or expand upon the documentation as needed to provide more details or examples.
+
+
+# ConvolveImage Function
+
+The `ConvolveImage` function is a Python utility for applying convolution to an image using a given kernel. This function supports both Pillow (PIL) and NumPy image types, allowing you to perform convolution operations on images.
+
+## Function Signature
+
+```python
+def ConvolveImage(image, kernel, verbose=True):
+```
+
+### Parameters
+
+- `image` (PIL.Image.Image): The input image.
+- `kernel` (numpy.ndarray): The convolution kernel.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- `PIL.Image.Image`: The convolved image.
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as checking if the input image is a valid PIL Image object and verifying the kernel's data type and shape. It gracefully handles these errors and provides informative error messages.
+
+### Examples
+
+#### Example 1: Convolve an image using a custom kernel
+
+```python
+import abdutils as abd
+import numpy as np
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Define a custom convolution kernel
+custom_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+# Apply convolution to the image using the custom kernel
+convolved_image = abd.ConvolveImage(image, custom_kernel)
+
+# Show the convolved image
+abd.ShowImage(convolved_image)
+
+# Display or further process the convolved image
+```
+
+In this example, the function applies convolution to an image using a custom kernel and displays the convolved image using `abd.ShowImage`.
+
+#### Example 2: Convolve an image without displaying verbose messages
+
+```python
+import abdutils as abd
+import numpy as np
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Define a custom convolution kernel
+custom_kernel = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
+# Apply convolution to the image without verbose messages
+convolved_image = abd.ConvolveImage(image, custom_kernel, verbose=False)
+
+# Show the convolved image
+abd.ShowImage(convolved_image)
+
+# Display or further process the convolved image
+```
+
+This example applies convolution to an image using a custom kernel but disables verbose messages during the convolution process.
+
+# ApplyFilter Function
+
+The `ApplyFilter` function is a Python utility for applying a convolution filter to an image using a custom kernel. This function supports both Pillow (PIL) and NumPy image types, allowing you to apply custom filters to images.
+
+## Function Signature
+
+```python
+def ApplyFilter(image, kernel):
+```
+
+### Parameters
+
+- `image` (PIL.Image.Image or numpy.ndarray): The input image to apply the filter to.
+- `kernel` (numpy.ndarray): The custom convolution kernel.
+
+### Returns
+
+- `PIL.Image.Image` or `numpy.ndarray`: The filtered image.
+
+### Error Handling
+
+The function includes error handling for various scenarios, such as checking if the input image is a valid PIL Image object or a NumPy array (cv2 image). It gracefully handles these errors and provides informative error messages.
+
+### Examples
+
+#### Example 1: Apply a custom filter to an image
+
+```python
+import abdutils as abd
+import numpy as np
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Define a custom convolution kernel for the filter
+custom_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+# Apply the custom filter to the image
+filtered_image = abd.ApplyFilter(image, custom_kernel)
+
+# Show the filtered image
+abd.ShowImage(filtered_image)
+
+# Display or further process the filtered image
+```
+
+In this example, the function applies a custom filter to an image using a custom convolution kernel and displays the filtered image using `abd.ShowImage`.
+
+#### Example 2: Apply a filter to a NumPy array (cv2 image)
+
+```python
+import abdutils as abd
+import numpy as np
+
+# Read an image using cv2 (NumPy array)
+image = abd.ReadImage("input.png")
+
+# Define a custom convolution kernel for the filter
+custom_kernel = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+
+# Apply the custom filter to the image (NumPy array)
+filtered_image = abd.ApplyFilter(image, custom_kernel)
+
+# Show the filtered image
+abd.ShowImage(filtered_image)
+
+# Display or further process the filtered image
+```
+
+This example demonstrates applying a custom filter to a NumPy array (cv2 image) and displaying the filtered image using `abd.ShowImage`.
+
+These examples showcase the functionality of the `ConvolveImage` and `ApplyFilter` functions, allowing you to perform convolution operations and apply custom filters to images with ease. Customize the kernel and image paths as needed for your specific image processing tasks.
+
+
+You can customize or expand upon this documentation as necessary to provide more details or examples for your functions.
+
+# ShowImage Function
+
+The `ShowImage` function is a Python utility for displaying an image using Matplotlib. This function is useful for visualizing images during image processing tasks.
+
+## Function Signature
+
+```python
+def ShowImage(image, title="Image", verbose=True):
+```
+
+### Parameters
+
+- `image` (PIL.Image.Image): The input image.
+- `title` (str): The title of the displayed image.
+- `verbose` (bool): Whether to display verbose messages. Defaults to True.
+
+### Returns
+
+- None
+
+### Error Handling
+
+The function includes error handling to ensure that the input `image` is a valid PIL Image object. If the input is not a PIL Image, it raises an error.
+
+### Example
+
+```python
+import abdutils as abd
+
+# Read an image
+image = abd.ReadImage("input.jpg")
+
+# Display the image with a custom title
+abd.ShowImage(image, title="My Image")
+
+# Continue with image processing or analysis
+```
+
+In this example, the `ShowImage` function is used to display an image with a custom title. The image can be loaded using the `abd.ReadImage` function or obtained from any other source.
+
+# CV2PIL Function
+
+The `CV2PIL` function is a Python utility for converting an OpenCV image (in BGR format) to a PIL Image (in RGB format). This conversion is useful when working with both OpenCV and PIL for image processing tasks.
+
+## Function Signature
+
+```python
+def CV2PIL(cv2_image):
+```
+
+### Parameters
+
+- `cv2_image` (numpy.ndarray): The OpenCV image (BGR format).
+
+### Returns
+
+- PIL.Image.Image or None: The PIL Image if the conversion is successful; otherwise, it returns None.
+
+### Example
+
+```python
+import abdutils as abd
+
+# Load an image using OpenCV (cv2)
+cv2_image = abd.ReadImage("input.jpg")
+
+# Convert the OpenCV image to a PIL Image
+pil_image = abd.CV2PIL(cv2_image)
+
+# Perform PIL-based image processing on pil_image
+```
+
+In this example, the `CV2PIL` function is used to convert an OpenCV image to a PIL Image, enabling further image processing using PIL.
+
+# PIL2CV2 Function
+
+The `PIL2CV2` function is a Python utility for converting a PIL Image (in RGB format) to an OpenCV image (in BGR format). This conversion is useful when working with both PIL and OpenCV for image processing tasks.
+
+## Function Signature
+
+```python
+def PIL2CV2(pil_image):
+```
+
+### Parameters
+
+- `pil_image` (PIL.Image.Image): The PIL Image (RGB format).
+
+### Returns
+
+- numpy.ndarray or None: The OpenCV image if the conversion is successful; otherwise, it returns None.
+
+### Example
+
+```python
+import abdutils as abd
+
+# Load an image using PIL
+pil_image = abd.ReadImage("input.jpg")
+
+# Convert the PIL Image to an OpenCV image
+cv2_image = abd.PIL2CV2(pil_image)
+
+# Perform OpenCV-based image processing on cv2_image
+```
+
+In this example, the `PIL2CV2` function is used to convert a PIL Image to an OpenCV image, enabling further image processing using OpenCV.
+
+These utility functions (`ShowImage`, `CV2PIL`, and `PIL2CV2`) provide essential functionality for displaying images and performing conversions between common image formats, making them valuable tools for image processing and analysis tasks.
+
+
+You can further customize or expand upon this documentation to provide more examples or details about how to use these functions in different scenarios.
