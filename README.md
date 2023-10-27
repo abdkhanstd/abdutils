@@ -1,6 +1,6 @@
 # abdutils
 
-# abdutils: Simplifying Python File/Image Operations (Others Coming Soon)
+# abdutils: Simplifying Python File/Image Operations ####(Others Coming Soon)
 
 Are you tired of dealing with complex Python libraries and struggling with unclear learning examples? We've been there too, which is why we created `abdutils`.
 
