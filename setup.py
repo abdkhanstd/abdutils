@@ -8,5 +8,5 @@ setup(
     author_email='abdkhan@163.com',
     url='https://github.com/abdkhanstd/abdutils',
     packages=find_packages(),  # Automatically find all packages in the directory
-    py_modules=['abdutils.abdutils'],  # Specify the main module (Python file) to be included
+    py_modules=['abdutils'],  # Specify the main module (Python file) to be included
 )
