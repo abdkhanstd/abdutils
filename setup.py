@@ -9,7 +9,7 @@ setup(
     author='ABD',
     author_email='abdkhan@163.com',
     url='https://github.com/abdkhanstd/abdutils',
-    py_modules=['abdutil'],  # Specify the main module (Python file) to be included
+    py_modules=['abdutil.abdutils'],  # Specify the main module (Python file) to be included
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
