@@ -21,7 +21,8 @@ Are you tired of dealing with complex Python libraries and struggling with uncle
 To get started with `abdutils`, you can install it easily using `pip`. Here's how:
 
 ```bash
-pip install git+https://github.com/abdkhanstd/abdutils.git
+pip install --upgrade git+https://github.com/abdkhanstd/abdutils.git
+
 ```
 ## Purpose
 
@@ -38,7 +39,8 @@ Whether you're a beginner or an experienced developer, `abdutils` is here to mak
 You can install `abdutils` directly from its GitHub repository using pip:
 
 ```bash
-pip install git+https://github.com/abdkhanstd/abdutils.git
+pip install --upgrade git+https://github.com/abdkhanstd/abdutils.git
+
 ```
 
 To verify the installation of a Python package installed via `pip` and to provide installation instructions in a GitHub README file, follow these steps:
