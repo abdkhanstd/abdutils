@@ -178,6 +178,10 @@ abd.CreateFolder("folder_to_create_if_not_exist", mode="c", verbose=True)
 ```python
 import abdutils as abd
 
+# Creating a folder first
+abd.CreateFolder("folder_to_ask_user")
+
+#recreating the folder
 abd.CreateFolder("folder_to_ask_user", mode="a", verbose=True)
 # User will be prompted for input.
 ```
