@@ -14,28 +14,37 @@ from PIL import Image
 import os
 import glob
 
-def check_required_args(**kwargs):
-    """
-    Checks if any of the required arguments are missing or None.
-    
+import inspect
 
-    Args:
-        **kwargs: Keyword arguments where key is the argument name and value is its value.
+def check_required_args():
+    # Get the calling function's frame
+    caller_frame = inspect.currentframe().f_back
+    # Get the calling function's arguments
+    caller_args = inspect.getargvalues(caller_frame).locals
 
-    Returns:
-        List of missing argument names or an empty list if all are provided.
-    """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
-    
-    missing_args = [arg_name for arg_name, arg_value in kwargs.items() if arg_value is None]
+    # Extract argument names of the calling function
+    func_arg_names = inspect.getfullargspec(caller_frame.f_globals[caller_frame.f_code.co_name]).args
+
+    missing_args = [arg_name for arg_name in func_arg_names if caller_args[arg_name] is None]
+
     if missing_args:
-        HandleError("Missing argument. Please see examples", caller_filename, caller_line)
-    return missing_args
+        caller_frame = sys._getframe(2)  # Get the caller's frame (1 level up in the call stack)
+        caller_line = caller_frame.f_lineno  # Get the caller's line number
+        caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+
+        msg = f"The following input(s) /argument(s) are missing: {', '.join(missing_args)}"
+        HandleError(msg, caller_filename, caller_line)
+        
+        
+def get_caller_info():    
+    caller_frame = sys._getframe(2)
+    caller_line = caller_frame.f_lineno
+    caller_filename = caller_frame.f_globals.get('__file__')
+    return caller_filename, caller_line
 
 
-def ReadDirectoryContents(path_pattern, verbose=True):
+
+def ReadDirectoryContents(path_pattern=None, verbose=True):
     """
     Reads the contents of a directory based on the provided pattern and returns a list of matched items.
 
@@ -47,10 +56,10 @@ def ReadDirectoryContents(path_pattern, verbose=True):
     Returns:
         list: A list of matched items based on the provided pattern.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
     
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
         matched_items = glob.glob(path_pattern)
         if verbose:
@@ -62,162 +71,194 @@ def ReadDirectoryContents(path_pattern, verbose=True):
         HandleError(str(e), caller_filename, caller_line)
         return []
 
-
-def CopyFile(src_pattern, dest_folder, verbose=True):
+def GetFileNameFromPath(path):
     """
-    Copies files from the source pattern to the destination folder.
+    Split a path into its folder and filename components.
 
     Args:
-        src_pattern (str): The source file pattern. Supports regular expressions like '/path/to/files/*.txt'.
-        dest_folder (str): The destination folder where files will be copied.
+        path (str): The path to be split.
+
+    Returns:
+        tuple: A tuple containing the folder and filename components.
+    """
+    folder = os.path.dirname(path)
+    filename = os.path.basename(path)
+    return folder, filename
+
+
+def Copy(src_pattern=None, dest_path=None, verbose=True):
+    """
+    Copies files from the source pattern to the destination path.
+
+    Args:
+        src_pattern (str): The source file pattern.
+        dest_path (str): The destination path.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    check_required_args()
+    caller_filename, caller_line = get_caller_info()
     
+    # Check if the source pattern is a wildcard and the destination is a folder
+    if '*' in src_pattern:
+        # If wildcards are present, the destination path must be a folder
+        if not dest_path.endswith('/'):
+            if verbose:
+                msg = "When the source pattern contains a wildcard (*), the destination path must be a folder. Make sure the path has a trailing slash (e.g., 'Destination_Folder/')"
+                HandleError(msg, caller_filename, caller_line)
+            return
+
+
     try:
+        # Use glob to expand the source pattern and get a list of matching files
         matched_files = glob.glob(src_pattern)
-        
+
         if not matched_files:
             if verbose:
-                msg=f"No files found matching the pattern '{src_pattern}'."
+                msg = f"No files/folder found matching the pattern '{src_pattern}'."
                 HandleError(msg, caller_filename, caller_line)
             return
 
-        CreateFolder(dest_folder, mode="f", verbose=verbose)
+        # If the destination is a directory, get the directory path and create it if it doesn't exist
+        if os.path.isdir(dest_path):
+            dest_folder = dest_path
+        else:
+            # If the destination is a file, separate the folder and filename
+            dest_folder, dest_filename = GetFileNameFromPath(dest_path)
+            CreateFolder(dest_folder, mode="c", verbose=False)
 
-        for file_path in matched_files:
-            shutil.copy(file_path, dest_folder)
+        # Copy each matched file to the destination folder
+        for src_file_path in matched_files:
+            # Construct the destination file path by joining the destination folder and the source file name
+            dest_file_path = os.path.join(dest_folder, os.path.basename(src_file_path))
+            shutil.copy(src_file_path, dest_file_path)
             if verbose:
-                print(f"Copied '{file_path}' to '{dest_folder}'.")
+                print(f"Copied '{src_file_path}' to '{dest_file_path}'.")
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
 
-
-def MoveFolder(original_path, new_path, verbose=True):
-    """Move a folder from the original path to the new path."""
-    caller_frame = sys._getframe(1)
-    caller_line = caller_frame.f_lineno
-    caller_filename = caller_frame.f_globals.get('__file__')
-    try:
-        folder = os.path.dirname(new_path)
-        CreateFolder(folder, mode="f")
-
-        shutil.move(original_path, new_path)
-        if verbose:
-            print(f"Folder '{original_path}' moved to '{new_path}'.")
-
-    except Exception as e:
-        HandleError(str(e), caller_filename, caller_line)
-
-def MoveFile(src_pattern, dest_folder, verbose=True):
+def Move(src_pattern=None, dest_path=None, verbose=True):
     """
-    Moves files from the source pattern to the destination folder.
+    Copies files from the source pattern to the destination path.
 
     Args:
-        src_pattern (str): The source file pattern. Supports regular expressions like '/path/to/files/*.txt'.
-        dest_folder (str): The destination folder where files will be moved.
+        src_pattern (str): The source file pattern.
+        dest_path (str): The destination path.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    check_required_args()
+    caller_filename, caller_line = get_caller_info()
     
+    # Check if the source pattern is a wildcard and the destination is a folder
+    if '*' in src_pattern:
+        # If wildcards are present, the destination path must be a folder
+        if not dest_path.endswith('/'):
+            if verbose:
+                msg = "When the source pattern contains a wildcard (*), the destination path must be a folder. Make sure the path has a trailing slash (e.g., 'Destination_Folder/')"
+                HandleError(msg, caller_filename, caller_line)
+            return
+
+
     try:
+        # Use glob to expand the source pattern and get a list of matching files
         matched_files = glob.glob(src_pattern)
-        
+
         if not matched_files:
             if verbose:
-                msg=f"No files found matching the pattern '{src_pattern}'."
+                msg = f"No files/folder found matching the pattern '{src_pattern}'."
                 HandleError(msg, caller_filename, caller_line)
             return
 
-        CreateFolder(dest_folder, mode="f", verbose=verbose)
+        # If the destination is a directory, get the directory path and create it if it doesn't exist
+        if os.path.isdir(dest_path):
+            dest_folder = dest_path
+        else:
+            # If the destination is a file, separate the folder and filename
+            dest_folder, dest_filename = GetFileNameFromPath(dest_path)
+            CreateFolder(dest_folder, mode="c", verbose=False)
 
-        for file_path in matched_files:
-            shutil.move(file_path, dest_folder)
+        # Move each matched file to the destination folder
+        for src_file_path in matched_files:
+            # Construct the destination file path by joining the destination folder and the source file name
+            dest_file_path = os.path.join(dest_folder, os.path.basename(src_file_path))
+            shutil.move(src_file_path, dest_file_path)
             if verbose:
-                print(f"Moved '{file_path}' to '{dest_folder}'.")
+                print(f"Moved '{src_file_path}' to '{dest_file_path}'.")
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
 
-def RenameFileFolder(src_pattern, dest_name, verbose=True):
+def Delete(path=None, verbose=True):
     """
-    Renames a file or folder based on the provided source pattern.
+    Deletes files or folders based on the given path. Supports wildcard patterns.
 
     Args:
-        src_pattern (str): The source file/folder pattern. Supports regular expressions like '/path/to/files/fileprefix*'.
-        dest_name (str): The new name for the file/folder.
+        path (str): The path to the file or folder to be deleted. Supports wildcard patterns.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
-    
+    check_required_args()
+    caller_filename, caller_line = get_caller_info()
+
     try:
-        matched_files_folders = glob.glob(src_pattern)
-        
-        if not matched_files_folders:
+        # Use glob to expand the path and get a list of matching files and folders
+        matched_paths = glob.glob(path, recursive=True)
+
+        if not matched_paths:
             if verbose:
-                msg=f"No files or folders found matching the pattern '{src_pattern}'."
+                msg = f"No files/folders found matching the pattern '{path}'."
                 HandleError(msg, caller_filename, caller_line)
             return
-        
-        if len(matched_files_folders) > 1:
-            msg = f"Multiple files or folders matched the pattern '{src_pattern}'. Please be more specific."
+
+        # Iterate over matched paths and delete them
+        for matched_path in matched_paths:
+            if os.path.isfile(matched_path):
+                # Delete the file
+                os.remove(matched_path)
+                if verbose:
+                    print(f"Deleted file '{matched_path}'.")
+            elif os.path.isdir(matched_path):
+                # Delete the folder and its contents
+                shutil.rmtree(matched_path)
+                if verbose:
+                    print(f"Deleted folder '{matched_path}' and its contents.")
+            else:
+                # Handle other types of paths (e.g., symlinks)
+                msg = f"Deleted '{matched_path}' (unsupported path type)."
+                HandleError(msg, caller_filename, caller_line)
+
+    except Exception as e:
+        HandleError(str(e), caller_filename, caller_line)
+
+
+def Rename(src_path=None, new_name=None, verbose=True):
+    """
+    Renames a file or folder based on the given source path and new name.
+
+    Args:
+        src_path (str): The source path of the file or folder to be renamed.
+        new_name (str): The new name for the file or folder.
+        verbose (bool): Whether to display verbose messages. Defaults to True.
+    """
+    check_required_args()    
+    caller_filename, caller_line = get_caller_info()
+
+    try:
+        if os.path.exists(src_path):
+            parent_folder = os.path.dirname(src_path)
+            new_path = os.path.join(parent_folder, new_name)
+            os.rename(src_path, new_path)
+            if verbose:
+                print(f"Renamed '{src_path}' to '{new_path}'.")
+        else:
+         
+            msg = f"No output ('{src_path}' does not exist)."
             HandleError(msg, caller_filename, caller_line)
-            return
+    except Exception as e:        
+        msg = f"[Error] {str(e)}"
+        HandleError(msg, caller_filename, caller_line)
 
-        src_path = matched_files_folders[0]
-        dest_path = os.path.join(os.path.dirname(src_path), dest_name)
-        
-        os.rename(src_path, dest_path)
-        
-        if verbose:
-            print(f"Renamed '{src_path}' to '{dest_path}'.")
 
-    except Exception as e:
-        HandleError(str(e), caller_filename, caller_line)
-
-def DeleteFileFolder(path, verbose=True):
-    """
-    Deletes a file or a folder. If it's a folder, it will be deleted even if it's not empty.
-
-    Args:
-        path (str): The path to the file or folder to be deleted.
-        verbose (bool): Whether to display verbose messages. Defaults to True.
-    """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
-    
-    try:
-        # Check if the path exists
-        if not os.path.exists(path):
-            if verbose:
-                msg=f"Path '{path}' does not exist."
-                HandleError(msg, caller_filename, caller_line)
-            return
-
-        # If it's a file, delete it
-        if os.path.isfile(path):
-            os.remove(path)
-            if verbose:
-                print(f"File '{path}' deleted successfully.")
-
-        # If it's a directory, delete it
-        elif os.path.isdir(path):
-            shutil.rmtree(path)
-            if verbose:
-                print(f"Folder '{path}' deleted successfully.")
-
-    except Exception as e:
-        HandleError(str(e), caller_filename, caller_line)
-
-def CreateFolder(path, mode="a", verbose=True):
+def CreateFolder(path=None, mode="a", verbose=True):
     """
     Create a folder with the given path using one of the following modes:
 
@@ -231,32 +272,32 @@ def CreateFolder(path, mode="a", verbose=True):
         mode (str): The mode for folder creation ('f', 'o', 'c', or 'a'). Defaults to 'a' (ask_user).
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
 
         
         if mode == "f":
             if os.path.exists(path):
                 if verbose:
-                    print(f"Info: The folder '{path}' already exists. Deleting and recreating.")
+                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' already exists. Deleting and recreating.")
                 shutil.rmtree(path)
             os.makedirs(path, exist_ok=True)
         elif mode == "o":
             if os.path.exists(path):
                 if verbose:
-                    print(f"Info: The folder '{path}' already exists. Overwriting.")
+                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' already exists. Overwriting.")
                 shutil.rmtree(path)
             os.makedirs(path, exist_ok=True)
         elif mode == "c":
             if not os.path.exists(path):
                 if verbose:
-                    print(f"Info: The folder '{path}' doesn't exist. Creating it.")
+                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' doesn't exist. Creating it.")
                 os.makedirs(path)
             else:
                 if verbose:
-                    print(f"Info: The folder '{path}' already exists. Skipping creation.")
+                    print(f"[{caller_filename}, {caller_line} ] Info: The folder '{path}' already exists. Skipping creation.")
                     
         elif mode == "a":
             if os.path.exists(path):
@@ -290,9 +331,9 @@ def get_file_pointer(file_path):
     return file_pointers.get(file_path, 0)
 
 def ReadFile(file_path):
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename    
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+         
     try:
         if not os.path.exists(file_path):
             msg=f"File not found: {file_path}"
@@ -326,7 +367,7 @@ def save_file_pointer(file_path, offset):
 def get_file_pointer(file_path):
     return file_pointers.get(file_path, 0)
 
-def WriteFile(file_path, lines):
+def WriteFile(file_path=None, lines=None):
     """
     Write lines to a file in either append or write mode based on the file pointer.
 
@@ -337,10 +378,9 @@ def WriteFile(file_path, lines):
     Returns:
         None
     """
-    check_required_args(**kwargs)
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename       
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+          
     try:
 
         offset = get_file_pointer(file_path)
@@ -369,7 +409,7 @@ def WriteFile(file_path, lines):
 
 
 
-def ReadImage(image_path, mode='RGB', method='auto'):
+def ReadImage(image_path=None, mode='RGB', method='auto'):
 
     """
     Read an image from the specified file path.
@@ -382,12 +422,10 @@ def ReadImage(image_path, mode='RGB', method='auto'):
     Returns:
         PIL.Image.Image or numpy.ndarray: The loaded image.
     """
-
-    try:
-        caller_frame = inspect.currentframe().f_back
-        caller_filename = caller_frame.f_globals.get('__file__')
-        caller_line = caller_frame.f_lineno    
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
         
+    try:
         # Check if mode is valid
         if mode not in ['RGB', 'L']:
             msg = "Invalid mode. Please use 'RGB' or 'L'."
@@ -449,12 +487,12 @@ def ReadImage(image_path, mode='RGB', method='auto'):
 
 
 
-def SaveImage(image, save_path, method='auto'):
+def SaveImage(image=None, save_path=None, method='auto'):
     save_path = os.path.abspath(save_path)
 
-    caller_frame = inspect.currentframe().f_back
-    caller_filename = caller_frame.f_globals.get('__file__')
-    caller_line = caller_frame.f_lineno 
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
         if method == 'auto':
             if isinstance(image, Image.Image):
@@ -513,7 +551,7 @@ def HandleError(msg, caller_filename, caller_line):
     
 
 
-def ConvertToGrayscale(image, method='auto'):
+def ConvertToGrayscale(image=None, method='auto'):
     """
     Convert an image to grayscale.
 
@@ -538,9 +576,9 @@ def ConvertToGrayscale(image, method='auto'):
         # Convert an image to grayscale using the 'CV2' method
         grayscale_image = ConvertToGrayscale(image, method='CV2')
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename        
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+          
     try:
         caller_frame = inspect.currentframe().f_back
         caller_filename = caller_frame.f_globals.get('__file__')
@@ -585,7 +623,7 @@ def ConvertToGrayscale(image, method='auto'):
         HandleError(msg,caller_filename, caller_line)
         return None
 
-def ConvertToRGB(image, method='auto'):
+def ConvertToRGB(image=None, method='auto'):
     """
     Convert an image to RGB color mode.
 
@@ -610,9 +648,9 @@ def ConvertToRGB(image, method='auto'):
         # Convert an image to RGB color mode using the 'CV2' method
         rgb_image = ConvertToRGB(image, method='CV2')
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename        
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+              
     try:
         if method == 'auto':
             if isinstance(image, Image.Image):
@@ -672,7 +710,7 @@ def ConvertToRGB(image, method='auto'):
         HandleError(msg,caller_filename, caller_line)
         return None
 
-def CropImage(image, coordinates):
+def CropImage(image=None, coordinates=None):
     """
     Crop an image.
 
@@ -687,9 +725,9 @@ def CropImage(image, coordinates):
         # Crop a region of interest from an image
         cropped_image = CropImage(image, [0, 0, 50, 50])
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename        
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+          
     try:
         if isinstance(image, Image.Image):
             if len(coordinates) == 4:
@@ -707,7 +745,7 @@ def CropImage(image, coordinates):
         return None
 
 
-def GetImageSize(image, method='auto'):
+def GetImageSize(image=None, method='auto'):
     """
     Get the size (width, height) and number of channels of an image using either PIL (Pillow) or OpenCV (cv2).
 
@@ -720,9 +758,9 @@ def GetImageSize(image, method='auto'):
         tuple: A tuple containing the width, height, and number of channels of the image, e.g., (width, height, channels).
                If the image method is unsupported, returns (0, 0, 0).
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename        
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
         if method == 'auto':
             if isinstance(image, Image.Image):
@@ -766,7 +804,7 @@ def GetImageSize(image, method='auto'):
 
 
 
-def ResizeImage(image, size, verbose=True):
+def ResizeImage(image=None, size=None, verbose=True):
     """
     Resize an image to the specified size while preserving the aspect ratio.
 
@@ -778,10 +816,9 @@ def ResizeImage(image, size, verbose=True):
     Returns:
         PIL.Image.Image: The resized image.
     """
-    print("Here")
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+              
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -803,7 +840,7 @@ def ResizeImage(image, size, verbose=True):
         exit(1)
 
 
-def GaussianBlurImage(image, sigma=1.0, verbose=True):
+def GaussianBlurImage(image=None, sigma=1.0, verbose=True):
     """
     Apply Gaussian blur to an image.
 
@@ -816,9 +853,9 @@ def GaussianBlurImage(image, sigma=1.0, verbose=True):
         PIL.Image.Image: The blurred image.
     """
     
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+          
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -839,7 +876,7 @@ def GaussianBlurImage(image, sigma=1.0, verbose=True):
         exit(1)
 
 
-def ConvertImageToGrayscale(image, verbose=True):
+def ConvertImageToGrayscale(image=None, verbose=True):
     """
     Convert an image to grayscale.
 
@@ -851,9 +888,9 @@ def ConvertImageToGrayscale(image, verbose=True):
         PIL.Image.Image: The grayscale image.
     """
     
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+               
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -870,7 +907,7 @@ def ConvertImageToGrayscale(image, verbose=True):
         exit(1)
 
 
-def SharpenImage(image, factor=2.0, verbose=True):
+def SharpenImage(image=None, factor=2.0, verbose=True):
     """
     Sharpen an image.
 
@@ -883,9 +920,9 @@ def SharpenImage(image, factor=2.0, verbose=True):
         PIL.Image.Image: The sharpened image.
     """
     
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+             
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -906,7 +943,7 @@ def SharpenImage(image, factor=2.0, verbose=True):
         HandleError(msg,caller_filename, caller_line)          
         
 
-def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, verbose=True):
+def DetectEdgesInImage(image=None, method='canny', threshold1=100, threshold2=200, verbose=True):
     """
     Detect edges in an image using various edge detection methods.
 
@@ -920,10 +957,9 @@ def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, ve
     Returns:
         PIL.Image.Image: The edge-detected image.
     """
-    caller_frame = sys._getframe(1)
-    caller_line = caller_frame.f_lineno
-    caller_filename = caller_frame.f_globals.get('__file__')
-
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
         if not isinstance(image, Image.Image):
             msg = "Input 'image' must be a PIL Image object."
@@ -981,7 +1017,7 @@ def DetectEdgesInImage(image, method='canny', threshold1=100, threshold2=200, ve
         msg = f"{e}"
         HandleError(msg, caller_filename, caller_line)
 
-def ConvolveImage(image, kernel, verbose=True):
+def ConvolveImage(image=None, kernel=None, verbose=True):
     """
     Apply convolution to an image with a given kernel.
 
@@ -993,9 +1029,9 @@ def ConvolveImage(image, kernel, verbose=True):
     Returns:
         PIL.Image.Image: The convolved image.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+           
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -1019,7 +1055,7 @@ def ConvolveImage(image, kernel, verbose=True):
 
 
 
-def ApplyFilter(image, kernel):
+def ApplyFilter(image=None, kernel=None):
     """
     Apply a convolution filter to an image using a custom kernel.
 
@@ -1030,9 +1066,9 @@ def ApplyFilter(image, kernel):
     Returns:
         PIL.Image.Image or numpy.ndarray: The filtered image.
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+             
     try:
         if isinstance(image, Image.Image):
             # If the input image is a PIL Image, convert it to a numpy array
@@ -1058,7 +1094,7 @@ def ApplyFilter(image, kernel):
 
 
 
-def ShowImage(image, title="Image", verbose=True):
+def ShowImage(image=None, title="Image", verbose=True):
     """
     Display an image using matplotlib.
 
@@ -1070,9 +1106,9 @@ def ShowImage(image, title="Image", verbose=True):
     Returns:
         None
     """
-    caller_frame = sys._getframe(1)  # Get the caller's frame (1 level up in the call stack)
-    caller_line = caller_frame.f_lineno  # Get the caller's line number
-    caller_filename = caller_frame.f_globals.get('__file__')  # Get the caller's filename         
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+           
     try:
         if not isinstance(image, Image.Image):
             msg="Input 'image' must be a PIL Image object."
@@ -1091,7 +1127,7 @@ def ShowImage(image, title="Image", verbose=True):
         
         exit(1)
 
-def CV2PIL(cv2_image):
+def CV2PIL(cv2_image=None):
     """
     Convert an OpenCV image (BGR format) to a PIL Image (RGB format).
 
@@ -1101,10 +1137,9 @@ def CV2PIL(cv2_image):
     Returns:
         PIL.Image.Image or None: The PIL Image if conversion is successful, None otherwise.
     """
-    caller_frame = sys._getframe(1)
-    caller_line = caller_frame.f_lineno
-    caller_filename = caller_frame.f_globals.get('__file__')
-
+    check_required_args()
+    caller_filename, caller_line=get_caller_info()
+        
     try:
         if cv2_image is None:
             return None
@@ -1114,7 +1149,7 @@ def CV2PIL(cv2_image):
         HandleError(msg, caller_filename, caller_line)
         return None
 
-def PIL2CV2(pil_image):
+def PIL2CV2(pil_image=None):
     """
     Convert a PIL Image (RGB format) to an OpenCV image (BGR format).
 
@@ -1124,6 +1159,9 @@ def PIL2CV2(pil_image):
     Returns:
         numpy.ndarray or None: The OpenCV image if conversion is successful, None otherwise.
     """
+    
+    check_required_args()
+
     caller_frame = sys._getframe(1)
     caller_line = caller_frame.f_lineno
     caller_filename = caller_frame.f_globals.get('__file__')
@@ -1136,4 +1174,3 @@ def PIL2CV2(pil_image):
         msg = f"Error converting from PIL to OpenCV: {str(e)}"
         HandleError(msg, caller_filename, caller_line)
         return None
-
