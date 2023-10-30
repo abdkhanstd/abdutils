@@ -85,108 +85,126 @@ def GetFileNameFromPath(path):
     filename = os.path.basename(path)
     return folder, filename
 
-
-def Copy(src_pattern=None, dest_path=None, verbose=True):
+def Copy(src_path=None, dest_path=None, verbose=True):
     """
     Copies files from the source pattern to the destination path.
 
     Args:
-        src_pattern (str): The source file pattern.
+        src_path (str): The source file pattern.
         dest_path (str): The destination path.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
     check_required_args()
     caller_filename, caller_line = get_caller_info()
-    
-    # Check if the source pattern is a wildcard and the destination is a folder
-    if '*' in src_pattern:
-        # If wildcards are present, the destination path must be a folder
-        if not dest_path.endswith('/'):
-            if verbose:
-                msg = "When the source pattern contains a wildcard (*), the destination path must be a folder. Make sure the path has a trailing slash (e.g., 'Destination_Folder/')"
-                HandleError(msg, caller_filename, caller_line)
-            return
-
 
     try:
-        # Use glob to expand the source pattern and get a list of matching files
-        matched_files = glob.glob(src_pattern)
+        # Create the destination directory if it doesn't exist
+        os.makedirs(dest_path, exist_ok=True)
 
-        if not matched_files:
+        # Check if src_path is a wildcard pattern
+        if '*' in src_path:
+            # Use glob to expand the source pattern and get a list of matching files/folders
+            matched_paths = glob.glob(src_path)
+
+            if not matched_paths:
+                msg = f"No files/folders found matching the pattern '{src_path}'."
+                raise FileNotFoundError(msg)
+
+            # Copy each matched file/folder to the destination directory
+            for src_item in matched_paths:
+                dest_item = os.path.join(dest_path, os.path.basename(src_item))
+                if os.path.isdir(src_item):
+                    # Copy the contents of the folder directly into the destination folder
+                    for item in os.listdir(src_item):
+                        src_subitem = os.path.join(src_item, item)
+                        dest_subitem = os.path.join(dest_path, item)
+                        if os.path.isdir(src_subitem):
+                            shutil.copytree(src_subitem, dest_subitem)
+                        else:
+                            shutil.copy(src_subitem, dest_subitem)
+                else:
+                    shutil.copy(src_item, dest_item)
             if verbose:
-                msg = f"No files/folder found matching the pattern '{src_pattern}'."
-                HandleError(msg, caller_filename, caller_line)
-            return
+                print(f"Copied {len(matched_paths)} items to '{dest_path}'.")
 
-        # If the destination is a directory, get the directory path and create it if it doesn't exist
-        if os.path.isdir(dest_path):
-            dest_folder = dest_path
         else:
-            # If the destination is a file, separate the folder and filename
-            dest_folder, dest_filename = GetFileNameFromPath(dest_path)
-            CreateFolder(dest_folder, mode="c", verbose=False)
-
-        # Copy each matched file to the destination folder
-        for src_file_path in matched_files:
-            # Construct the destination file path by joining the destination folder and the source file name
-            dest_file_path = os.path.join(dest_folder, os.path.basename(src_file_path))
-            shutil.copy(src_file_path, dest_file_path)
-            if verbose:
-                print(f"Copied '{src_file_path}' to '{dest_file_path}'.")
+            # Check if src_path is a file or folder
+            if os.path.isfile(src_path):
+                dest_item = os.path.join(dest_path, os.path.basename(src_path))
+                shutil.copy(src_path, dest_item)
+                if verbose:
+                    print(f"Copied file '{src_path}' to '{dest_item}'.")
+            elif os.path.isdir(src_path):
+                # Copy the contents of the folder directly into the destination folder
+                for item in os.listdir(src_path):
+                    src_subitem = os.path.join(src_path, item)
+                    dest_subitem = os.path.join(dest_path, item)
+                    if os.path.isdir(src_subitem):
+                        shutil.copytree(src_subitem, dest_subitem)
+                    else:
+                        shutil.copy(src_subitem, dest_subitem)
+                if verbose:
+                    print(f"Copied folder '{src_path}' to '{dest_path}'.")
+            else:
+                msg = f"'{src_path}' does not exist or is not a valid file/folder."
+                raise FileNotFoundError(msg)
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
 
-def Move(src_pattern=None, dest_path=None, verbose=True):
+
+def Move(src_path=None, dest_path=None, verbose=True):
     """
-    Copies files from the source pattern to the destination path.
+    Moves files and folders from the source pattern to the destination path.
 
     Args:
-        src_pattern (str): The source file pattern.
+        src_path (str): The source file or folder path.
         dest_path (str): The destination path.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    check_required_args()
-    caller_filename, caller_line = get_caller_info()
     
-    # Check if the source pattern is a wildcard and the destination is a folder
-    if '*' in src_pattern:
-        # If wildcards are present, the destination path must be a folder
-        if not dest_path.endswith('/'):
-            if verbose:
-                msg = "When the source pattern contains a wildcard (*), the destination path must be a folder. Make sure the path has a trailing slash (e.g., 'Destination_Folder/')"
-                HandleError(msg, caller_filename, caller_line)
-            return
-
-
+    check_required_args()
+    caller_filename, caller_line = get_caller_info()    
     try:
-        # Use glob to expand the source pattern and get a list of matching files
-        matched_files = glob.glob(src_pattern)
+        # Check if src_path is a wildcard pattern
+        if '*' in src_path:
+            # Use glob to expand the source pattern and get a list of matching files/folders
+            matched_paths = glob.glob(src_path)
 
-        if not matched_files:
-            if verbose:
-                msg = f"No files/folder found matching the pattern '{src_pattern}'."
-                HandleError(msg, caller_filename, caller_line)
-            return
+            if not matched_paths:
+                msg = f"No files/folders found matching the pattern '{src_path}'."
+                raise FileNotFoundError(msg)
 
-        # If the destination is a directory, get the directory path and create it if it doesn't exist
-        if os.path.isdir(dest_path):
-            dest_folder = dest_path
+            # Move each matched file/folder to the destination directory
+            for src_item in matched_paths:
+                dest_item = os.path.join(dest_path, os.path.basename(src_item))
+                shutil.move(src_item, dest_item)
+                if verbose:
+                    print(f"Moved {os.path.basename(src_item)} to '{dest_item}'.")
         else:
-            # If the destination is a file, separate the folder and filename
-            dest_folder, dest_filename = GetFileNameFromPath(dest_path)
-            CreateFolder(dest_folder, mode="c", verbose=False)
-
-        # Move each matched file to the destination folder
-        for src_file_path in matched_files:
-            # Construct the destination file path by joining the destination folder and the source file name
-            dest_file_path = os.path.join(dest_folder, os.path.basename(src_file_path))
-            shutil.move(src_file_path, dest_file_path)
-            if verbose:
-                print(f"Moved '{src_file_path}' to '{dest_file_path}'.")
+            # Check if src_path is a file or folder
+            if os.path.isfile(src_path):
+                # If src_path is a file, construct the destination file path
+                dest_file_path = os.path.join(dest_path, os.path.basename(src_path))
+                shutil.move(src_path, dest_file_path)
+                if verbose:
+                    print(f"Moved file '{src_path}' to '{dest_file_path}'.")
+            elif os.path.isdir(src_path):
+                # If src_path is a directory, construct the destination directory path
+                dest_dir_path = os.path.join(dest_path, os.path.basename(src_path))
+                shutil.move(src_path, dest_dir_path)
+                if verbose:
+                    print(f"Moved folder '{src_path}' to '{dest_dir_path}'.")
+            else:
+                msg = f"'{src_path}' does not exist or is not a valid file/folder."
+                raise FileNotFoundError(msg)
 
     except Exception as e:
-        HandleError(str(e), caller_filename, caller_line)
+        msg = f"[Error] {str(e)}"
+        HandleError(msg, caller_filename, caller_line)
+
+
+
 
 def Delete(path=None, verbose=True):
     """
@@ -205,31 +223,36 @@ def Delete(path=None, verbose=True):
 
         if not matched_paths:
             if verbose:
-                msg = f"No files/folders found matching the pattern '{path}'."
-                HandleError(msg, caller_filename, caller_line)
+                msg = f"No files/folders found matching the pattern. Skipping Deletion'{path}'."
             return
 
         # Iterate over matched paths and delete them
         for matched_path in matched_paths:
-            if os.path.isfile(matched_path):
-                # Delete the file
-                os.remove(matched_path)
+            try:
+                if os.path.isfile(matched_path):
+                    # Delete the file
+                    os.remove(matched_path)
+                    if verbose:
+                        print(f"Deleted file '{matched_path}'.")
+                elif os.path.isdir(matched_path):
+                    # Delete the folder and its contents
+                    shutil.rmtree(matched_path)
+                    if verbose:
+                        print(f"Deleted folder '{matched_path}' and its contents.")
+                else:
+                    # Handle other types of paths (e.g., symlinks)
+                    msg = f"Deleted '{matched_path}' (unsupported path type)."
+                    HandleError(msg, caller_filename, caller_line)
+            except FileNotFoundError:
                 if verbose:
-                    print(f"Deleted file '{matched_path}'.")
-            elif os.path.isdir(matched_path):
-                # Delete the folder and its contents
-                shutil.rmtree(matched_path)
+                    print(f"File or folder not found: '{matched_path}'. Skipping deletion.")
+            except Exception as e:
                 if verbose:
-                    print(f"Deleted folder '{matched_path}' and its contents.")
-            else:
-                # Handle other types of paths (e.g., symlinks)
-                msg = f"Deleted '{matched_path}' (unsupported path type)."
-                HandleError(msg, caller_filename, caller_line)
+                    print(f"Error while deleting '{matched_path}': {str(e)}")
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
-
-
+        
 def Rename(src_path=None, new_name=None, verbose=True):
     """
     Renames a file or folder based on the given source path and new name.
@@ -239,10 +262,14 @@ def Rename(src_path=None, new_name=None, verbose=True):
         new_name (str): The new name for the file or folder.
         verbose (bool): Whether to display verbose messages. Defaults to True.
     """
-    check_required_args()    
+    check_required_args()
     caller_filename, caller_line = get_caller_info()
 
     try:
+        if not os.path.isabs(src_path):
+            # If src_path is a relative path, make it relative to the current working directory
+            src_path = os.path.join(os.getcwd(), src_path)
+
         if os.path.exists(src_path):
             parent_folder = os.path.dirname(src_path)
             new_path = os.path.join(parent_folder, new_name)
@@ -250,10 +277,9 @@ def Rename(src_path=None, new_name=None, verbose=True):
             if verbose:
                 print(f"Renamed '{src_path}' to '{new_path}'.")
         else:
-         
             msg = f"No output ('{src_path}' does not exist)."
             HandleError(msg, caller_filename, caller_line)
-    except Exception as e:        
+    except Exception as e:
         msg = f"[Error] {str(e)}"
         HandleError(msg, caller_filename, caller_line)
 
@@ -321,6 +347,7 @@ def CreateFolder(path=None, mode="a", verbose=True):
     except Exception as e:
         msg=f"Error: {str(e)} (Occurred in {caller_filename}, line {caller_line})"
         HandleError(msg,caller_filename, caller_line)
+      
 
 file_pointers = {}
 
@@ -329,6 +356,11 @@ def save_file_pointer(file_path, offset):
 
 def get_file_pointer(file_path):
     return file_pointers.get(file_path, 0)
+
+def reset_file_pointer(file_path):
+    file_pointers[file_path] = 0  # Explicitly set to 0
+    # or
+    # file_pointers.pop(file_path, None)  # Remove the file path entry
 
 def ReadFile(file_path):
     check_required_args()
@@ -343,7 +375,8 @@ def ReadFile(file_path):
         with open(file_path, 'r') as file:
             file.seek(offset)
             line = file.readline()
-            if not line:
+            if not line:                        
+                reset_file_pointer(file_path)  # Reset the pointer on completion              
                 return None
 
             # Strip various newline characters (\n, \r, \r\n)
@@ -360,6 +393,7 @@ def ReadFile(file_path):
     except Exception as e:
         msg=f"Error: {str(e)} (Occurred in {caller_filename}, line {caller_line})"
         HandleError(msg,caller_filename, caller_line)
+
 
 def save_file_pointer(file_path, offset):
     file_pointers[file_path] = offset
@@ -481,17 +515,13 @@ def ReadImage(image_path=None, mode='RGB', method='auto'):
         msg=f"Error reading the image: {str(e)})"
         HandleError(msg,caller_filename, caller_line)
         exit(0)
-
     return None
-
-
-
 
 def SaveImage(image=None, save_path=None, method='auto'):
     save_path = os.path.abspath(save_path)
 
     check_required_args()
-    caller_filename, caller_line=get_caller_info()
+    caller_filename, caller_line = get_caller_info()
         
     try:
         if method == 'auto':
@@ -500,56 +530,60 @@ def SaveImage(image=None, save_path=None, method='auto'):
             elif isinstance(image, np.ndarray):
                 method = 'CV2'
             else:
-                msg=f"Unsupported image type for automatic saving method detection."
-                HandleError(msg,caller_filename, caller_line)
-
+                msg = "Unsupported image type for automatic saving method detection."
+                HandleError(msg, caller_filename, caller_line)
 
         if method == 'PIL':
             if isinstance(image, Image.Image):
                 image.save(save_path)
             else:
-                msg="Unsupported image type. Please provide a PIL Image."
-                HandleError(msg,caller_filename, caller_line)
+                msg = "Unsupported image type. Please provide a PIL Image."
+                HandleError(msg, caller_filename, caller_line)
 
         elif method == 'CV2':
             if isinstance(image, np.ndarray):
+                # Ensure the correct number of color channels (e.g., convert grayscale to RGB if needed)
+                if len(image.shape) == 2 or (len(image.shape) == 3 and image.shape[2] == 1):
+                    if image.shape[2] == 1:
+                        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                    elif image.shape[2] == 4:
+                        # Handle RGBA images by converting them to RGB
+                        image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
+                elif len(image.shape) == 3 and image.shape[2] != 3:
+                    msg = "Unsupported number of channels in input image."
+                    HandleError(msg, caller_filename, caller_line)
+                
                 # Check if the user has write permission to the save_path
                 if not os.access(os.path.dirname(save_path), os.W_OK):
-                    
-                    msg= f"Permission denied to save the image to {save_path}"
-                    HandleError(msg,caller_filename, caller_line)
+                    msg = f"Permission denied to save the image to {save_path}"
+                    HandleError(msg, caller_filename, caller_line)
                 cv2.imwrite(save_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
             else:
-                msg="Unsupported image type. Please provide a numpy array (cv2 image)."
-                HandleError(msg,caller_filename, caller_line)
+                msg = "Unsupported image type. Please provide a numpy array (cv2 image)."
+                HandleError(msg, caller_filename, caller_line)
 
         else:
-            msg=f"Unsupported method: {method}. Please use 'auto', 'PIL', or 'CV2'."
-            HandleError(msg,caller_filename, caller_line)
+            msg = f"Unsupported method: {method}. Please use 'auto', 'PIL', or 'CV2'."
+            HandleError(msg, caller_filename, caller_line)
 
         return True  # Image saved successfully
     except PermissionError as pe:
-        msg=f"PermissionError: {str(pe)}"
-        HandleError(msg,caller_filename, caller_line)
-
+        msg = f"PermissionError: {str(pe)}"
+        HandleError(msg, caller_filename, caller_line)
         return False
     except ValueError as ve:
-        msg=f"ValueError: {str(ve)}"
-        HandleError(msg,caller_filename, caller_line)
+        msg = f"ValueError: {str(ve)}"
+        HandleError(msg, caller_filename, caller_line)
         return False
     except Exception as e:
-        msg=f"Error saving the image: {str(e)}"
-        HandleError(msg,caller_filename, caller_line)
+        msg = f"Error saving the image: {str(e)}"
+        HandleError(msg, caller_filename, caller_line)
         return False
-
-
 
 def HandleError(msg, caller_filename, caller_line):
     
     print(f"[Error: {caller_filename}, line {caller_line}] " + msg)
-    exit(0)
-    
-
+    #exit(0)
 
 def ConvertToGrayscale(image=None, method='auto'):
     """
@@ -580,9 +614,7 @@ def ConvertToGrayscale(image=None, method='auto'):
     caller_filename, caller_line=get_caller_info()
           
     try:
-        caller_frame = inspect.currentframe().f_back
-        caller_filename = caller_frame.f_globals.get('__file__')
-        caller_line = caller_frame.f_lineno    
+   
         if method == 'auto':
             if isinstance(image, Image.Image):
                 return image.convert('L')
@@ -801,42 +833,78 @@ def GetImageSize(image=None, method='auto'):
         HandleError(msg,caller_filename, caller_line)
         return 0, 0, 0
 
-
-
-
-def ResizeImage(image=None, size=None, verbose=True):
+def ResizeImage(image=None, size=None, verbose=True, interpolation='IANTIALIAS'):
     """
-    Resize an image to the specified size while preserving the aspect ratio.
+    Resize an image (PIL or cv2) to the specified size while preserving the aspect ratio.
 
     Args:
-        image (PIL.Image.Image): The input image.
+        image (PIL.Image.Image or numpy.ndarray): The input image (PIL or cv2 format).
         size (tuple): The target size (width, height).
         verbose (bool): Whether to display verbose messages. Defaults to True.
-
+        interpolation: The interpolation method to use (shorthand or full name).
+            - For PIL images, options are: NB, IBOX, IBILINEAR, IHAMMING, IBICUBIC, ILANCZOS, IANTIALIAS.
+            - For cv2 images, options are: CV_NEAREST, CV_LINEAR, CV_CUBIC, CV_LANCZOS4.
+            
     Returns:
-        PIL.Image.Image: The resized image.
+        PIL.Image.Image or numpy.ndarray: The resized image (PIL or cv2 format).
     """
     check_required_args()
-    caller_filename, caller_line=get_caller_info()
+    caller_filename, caller_line = get_caller_info()
+    
+    
+    # Define a dictionary to map shorthand names to full interpolation names
+    INTERPOLATION_MAP = {
+        'NB': Image.NEAREST,
+        'IBOX': Image.BOX,
+        'IBILINEAR': Image.BILINEAR,
+        'IHAMMING': Image.HAMMING,
+        'IBICUBIC': Image.BICUBIC,
+        'ILANCZOS': Image.LANCZOS,
+        'IANTIALIAS': Image.ANTIALIAS,
+        'CV_NEAREST': cv2.INTER_NEAREST,
+        'CV_LINEAR': cv2.INTER_LINEAR,
+        'CV_CUBIC': cv2.INTER_CUBIC,
+        'CV_LANCZOS4': cv2.INTER_LANCZOS4,
+    }
+
               
     try:
-        if not isinstance(image, Image.Image):
-            msg="Input 'image' must be a PIL Image object."
-            HandleError(msg,caller_filename, caller_line)
+        if isinstance(image, Image.Image):  # PIL image
+            if not isinstance(size, tuple) or len(size) != 2:
+                msg = "Input 'size' must be a tuple of two integers (width, height)."
+                HandleError(msg, caller_filename, caller_line)
+
+            if verbose:
+                print(f"Resizing PIL image to {size} using interpolation method: {interpolation}...")
+            
+            if interpolation in INTERPOLATION_MAP:
+                interpolation = INTERPOLATION_MAP[interpolation]
+
+            resized_image = image.resize(size, interpolation)
+
+        elif isinstance(image, np.ndarray):  # cv2 image
+            if verbose:
+                print(f"Resizing cv2 image to {size} using interpolation method: {interpolation}...")
+
+            if interpolation in INTERPOLATION_MAP:
+                interpolation = INTERPOLATION_MAP[interpolation]
+
+            if interpolation not in [cv2.INTER_NEAREST, cv2.INTER_LINEAR, cv2.INTER_CUBIC, cv2.INTER_LANCZOS4]:
+                msg = "Invalid interpolation method for cv2 image. Using cv2.INTER_LINEAR by default."
+                HandleError(msg, caller_filename, caller_line)
+                interpolation = cv2.INTER_LINEAR
+
+            resized_image = cv2.resize(image, size, interpolation=interpolation)
+
+        else:
+            msg = "Input 'image' must be a PIL Image object or a numpy.ndarray (cv2 image)."
+            HandleError(msg, caller_filename, caller_line)
         
-        if not isinstance(size, tuple) or len(size) != 2:
-            msg="Input 'size' must be a tuple of two integers (width, height)."
-            HandleError(msg,caller_filename, caller_line)
-        
-        if verbose:
-            print(f"Resizing image to {size}...")
-        
-        resized_image = image.resize(size, Image.ANTIALIAS)
         return resized_image
+
     except Exception as e:
-        msg=f"{e}"
-        HandleError(msg,caller_filename, caller_line)
-        
+        msg = f"{e}"
+        HandleError(msg, caller_filename, caller_line)
         exit(1)
 
 
