@@ -1,4 +1,5 @@
 __version__ = '0.1'
+# https://github.com/abdkhanstd/abdutils
 import os
 import shutil
 import warnings
@@ -10,11 +11,20 @@ import matplotlib.pyplot as plt
 import inspect
 import sys
 from PIL import Image
-
 import os
 import glob
-
 import inspect
+
+
+def HandleError(msg, caller_filename, caller_line):    
+    print(f"[🚫 Error: {caller_filename}, line {caller_line}] " + msg)
+    exit(0)
+    
+def ShowInfo(msg, caller_filename, caller_line):    
+    print(f"[📌 Info: {caller_filename}, line {caller_line}] " + msg)
+    
+def ShowWarning(msg, caller_filename, caller_line):    
+    print(f"[⚠️ Warning: {caller_filename}, line {caller_line}] " + msg)    
 
 def check_required_args():
     # Get the calling function's frame
@@ -63,7 +73,7 @@ def ReadDirectoryContents(path_pattern=None, verbose=True):
     try:
         matched_items = glob.glob(path_pattern)
         if verbose:
-            print(f"Found {len(matched_items)} items matching the pattern '{path_pattern}'.")
+            msg=(f"Found {len(matched_items)} items matching the pattern '{path_pattern}'.")
 
         return matched_items
 
@@ -125,7 +135,8 @@ def Copy(src_path=None, dest_path=None, verbose=True):
                 else:
                     shutil.copy(src_item, dest_item)
             if verbose:
-                print(f"Copied {len(matched_paths)} items to '{dest_path}'.")
+                msg=(f"Copied {len(matched_paths)} items to '{dest_path}'.")
+                ShowInfo(msg,caller_filename,caller_line)
 
         else:
             # Check if src_path is a file or folder
@@ -133,7 +144,9 @@ def Copy(src_path=None, dest_path=None, verbose=True):
                 dest_item = os.path.join(dest_path, os.path.basename(src_path))
                 shutil.copy(src_path, dest_item)
                 if verbose:
-                    print(f"Copied file '{src_path}' to '{dest_item}'.")
+                    msg=(f"Copied file '{src_path}' to '{dest_item}'.")
+                    ShowInfo(msg,caller_filename,caller_line)
+
             elif os.path.isdir(src_path):
                 # Copy the contents of the folder directly into the destination folder
                 for item in os.listdir(src_path):
@@ -144,9 +157,11 @@ def Copy(src_path=None, dest_path=None, verbose=True):
                     else:
                         shutil.copy(src_subitem, dest_subitem)
                 if verbose:
-                    print(f"Copied folder '{src_path}' to '{dest_path}'.")
+                    msg=(f"Copied folder '{src_path}' to '{dest_path}'.")
+                    ShowInfo(msg,caller_filename,caller_line)
             else:
                 msg = f"'{src_path}' does not exist or is not a valid file/folder."
+                HandleError(msg, caller_filename, caller_line)                
                 raise FileNotFoundError(msg)
 
     except Exception as e:
@@ -173,6 +188,7 @@ def Move(src_path=None, dest_path=None, verbose=True):
 
             if not matched_paths:
                 msg = f"No files/folders found matching the pattern '{src_path}'."
+                HandleError(msg, caller_filename, caller_line)
                 raise FileNotFoundError(msg)
 
             # Move each matched file/folder to the destination directory
@@ -180,7 +196,8 @@ def Move(src_path=None, dest_path=None, verbose=True):
                 dest_item = os.path.join(dest_path, os.path.basename(src_item))
                 shutil.move(src_item, dest_item)
                 if verbose:
-                    print(f"Moved {os.path.basename(src_item)} to '{dest_item}'.")
+                    msg=(f"Moved {os.path.basename(src_item)} to '{dest_item}'.")
+                    ShowInfo(msg, caller_filename, caller_line)
         else:
             # Check if src_path is a file or folder
             if os.path.isfile(src_path):
@@ -188,15 +205,18 @@ def Move(src_path=None, dest_path=None, verbose=True):
                 dest_file_path = os.path.join(dest_path, os.path.basename(src_path))
                 shutil.move(src_path, dest_file_path)
                 if verbose:
-                    print(f"Moved file '{src_path}' to '{dest_file_path}'.")
+                    msg=(f"Moved file '{src_path}' to '{dest_file_path}'.")
+                    ShowInfo(msg, caller_filename, caller_line)
             elif os.path.isdir(src_path):
                 # If src_path is a directory, construct the destination directory path
                 dest_dir_path = os.path.join(dest_path, os.path.basename(src_path))
                 shutil.move(src_path, dest_dir_path)
                 if verbose:
-                    print(f"Moved folder '{src_path}' to '{dest_dir_path}'.")
+                    msg=(f"Moved folder '{src_path}' to '{dest_dir_path}'.")
+                    ShowInfo(msg, caller_filename, caller_line)
             else:
                 msg = f"'{src_path}' does not exist or is not a valid file/folder."
+                HandleError(msg, caller_filename, caller_line)
                 raise FileNotFoundError(msg)
 
     except Exception as e:
@@ -233,22 +253,26 @@ def Delete(path=None, verbose=True):
                     # Delete the file
                     os.remove(matched_path)
                     if verbose:
-                        print(f"Deleted file '{matched_path}'.")
+                        msg=(f"Deleted file '{matched_path}'.")
                 elif os.path.isdir(matched_path):
                     # Delete the folder and its contents
                     shutil.rmtree(matched_path)
                     if verbose:
-                        print(f"Deleted folder '{matched_path}' and its contents.")
+                        msg=(f"Deleted folder '{matched_path}' and its contents.")
+                        ShowInfo(msg, caller_filename, caller_line)
+
                 else:
                     # Handle other types of paths (e.g., symlinks)
                     msg = f"Deleted '{matched_path}' (unsupported path type)."
                     HandleError(msg, caller_filename, caller_line)
             except FileNotFoundError:
                 if verbose:
-                    print(f"File or folder not found: '{matched_path}'. Skipping deletion.")
+                    msg=(f"File or folder not found: '{matched_path}'. Skipping deletion.")
+                    ShowWarning(msg, caller_filename, caller_line)
             except Exception as e:
                 if verbose:
-                    print(f"Error while deleting '{matched_path}': {str(e)}")
+                    msg=(f"Error while deleting '{matched_path}': {str(e)}")
+                    ShowWarning(msg, caller_filename, caller_line)
 
     except Exception as e:
         HandleError(str(e), caller_filename, caller_line)
@@ -275,7 +299,9 @@ def Rename(src_path=None, new_name=None, verbose=True):
             new_path = os.path.join(parent_folder, new_name)
             os.rename(src_path, new_path)
             if verbose:
-                print(f"Renamed '{src_path}' to '{new_path}'.")
+                msg=(f"Renamed '{src_path}' to '{new_path}'.")
+                ShowInfo(msg, caller_filename, caller_line)
+
         else:
             msg = f"No output ('{src_path}' does not exist)."
             HandleError(msg, caller_filename, caller_line)
@@ -307,34 +333,40 @@ def CreateFolder(path=None, mode="a", verbose=True):
         if mode == "f":
             if os.path.exists(path):
                 if verbose:
-                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' already exists. Deleting and recreating.")
+                    msg=(f"The folder '{path}' already exists. Deleting and recreating.")
+                    ShowInfo(msg, caller_filename, caller_line)
                 shutil.rmtree(path)
             os.makedirs(path, exist_ok=True)
         elif mode == "o":
             if os.path.exists(path):
                 if verbose:
-                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' already exists. Overwriting.")
+                    msg=(f"The folder '{path}' already exists. Overwriting.")
+                    ShowInfo(msg, caller_filename, caller_line)
                 shutil.rmtree(path)
             os.makedirs(path, exist_ok=True)
         elif mode == "c":
             if not os.path.exists(path):
                 if verbose:
-                    print(f"[{caller_filename}, {caller_line}] Info: The folder '{path}' doesn't exist. Creating it.")
+                    msg=(f"The folder '{path}' doesn't exist. Creating it.")
+                    ShowInfo(msg, caller_filename, caller_line)
                 os.makedirs(path)
             else:
                 if verbose:
-                    print(f"[{caller_filename}, {caller_line} ] Info: The folder '{path}' already exists. Skipping creation.")
+                    msg=(f"The folder '{path}' already exists. Skipping creation.")
+                    ShowInfo(msg, caller_filename, caller_line)
                     
         elif mode == "a":
             if os.path.exists(path):
-                user_input = input(f"The folder '{path}' already exists. Do you want to delete and overwrite it? (y/n): ")
+                user_input = input(f"❓❓ The folder '{path}' already exists. Do you want to delete and overwrite it? (y/n): ")
                 if user_input.lower() == "y":
                     if verbose:
-                        print(f"Info: The folder '{path}' already exists. Deleting and recreating.")
+                        msg=(f"The folder '{path}' already exists. Deleting and recreating.")
+                        ShowInfo(msg, caller_filename, caller_line)
                     shutil.rmtree(path)
                     os.makedirs(path, exist_ok=True)
                 else:
-                    print("Folder creation aborted.")
+                    msg=("Folder creation aborted.")
+                    ShowInfo(msg, caller_filename, caller_line)
             else:
                 os.makedirs(path, exist_ok=True)
         else:
@@ -580,10 +612,7 @@ def SaveImage(image=None, save_path=None, method='auto'):
         HandleError(msg, caller_filename, caller_line)
         return False
 
-def HandleError(msg, caller_filename, caller_line):
-    
-    print(f"[Error: {caller_filename}, line {caller_line}] " + msg)
-    #exit(0)
+
 
 def ConvertToGrayscale(image=None, method='auto'):
     """
