@@ -112,8 +112,8 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 - [ShowImage](#showimage-function)
 - [CV2PIL](#cv2pil-function)
 - [PIL2CV2](#pil2cv2-function)
-- [get_system_usage](#get_system_usage)
-- [get_console_height](#get_console_height)
+- [GetSystemUsage](#GetSystemUsage)
+- [GetConsoleHeight](#GetConsoleHeight)
 - [ClearScreen](#ClearScreen)
 - [ExitHandler](#ExitHandler)
 - [SelectGPU](#SelectGPU)
@@ -1501,33 +1501,33 @@ In this example, the `PIL2CV2` function is used to convert a PIL Image to an Ope
 
 These utility functions (`ShowImage`, `CV2PIL`, and `PIL2CV2`) provide essential functionality for displaying images and performing conversions between common image formats, making them valuable tools for image processing and analysis tasks.
 
-### get_system_usage
+### GetSystemUsage
 This function retrieves the current system's CPU, GPU, and Disk usage statistics.
 #### Function Signature
 ```python
-def get_system_usage():
+def GetSystemUsage():
 ```
 #### Example Usage
 ```python
 import abdutils as abd
 
-cpu, gpu_usages, gpu_memory, disk = abd.get_system_usage()
+cpu, gpu_usages, gpu_memory, disk = abd.GetSystemUsage()
 print(f"CPU Usage: {cpu}%, Disk Usage: {disk}%")
 for i, usage in enumerate(gpu_usages):
     print(f"GPU {i} Usage: {usage}%")
 for i, memory in enumerate(gpu_memory):
     print(f"GPU {i} Memory Usage: {memory}%")
 ```
-### get_console_height
+### GetConsoleHeight
 This function returns the height of the console in lines.
 #### Function Signature
 ```python
-def get_console_height():
+def GetConsoleHeight():
 ```
 #### Example Usage
 ```python
 import abdutils as abd
-height = abd.get_console_height()
+height = abd.GetConsoleHeight()
 print(f"Console Height: {height} lines")
 ```
 ### ClearScreen
@@ -1583,3 +1583,25 @@ if selected_gpu:
 
 *Note:* This function is ideal for scenarios where optimal GPU utilization is crucial, such as in machine learning or data processing tasks that are GPU-intensive. It simplifies the process of selecting the most appropriate GPU based on current memory availability.
 
+
+### ShowUsage
+The `ShowUsage` function displays real-time system usage statistics, including CPU, GPU, and Disk usage. It's typically implemented to run in a separate thread, continuously updating these statistics on the console.
+
+#### Function Signature
+```python
+def ShowUsage():
+    # Function body...
+```
+*No input parameters*
+
+#### Example Usage
+```python
+import abdutils as abd
+
+# Start displaying system usage in a separate thread
+abd.ShowUsage()
+
+# Rest of your program...
+```
+
+*Note:* This function is useful for monitoring the performance of your system in real-time, especially during resource-intensive operations.
