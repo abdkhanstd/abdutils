@@ -1501,7 +1501,7 @@ In this example, the `PIL2CV2` function is used to convert a PIL Image to an Ope
 
 These utility functions (`ShowImage`, `CV2PIL`, and `PIL2CV2`) provide essential functionality for displaying images and performing conversions between common image formats, making them valuable tools for image processing and analysis tasks.
 
-### GetSystemUsage
+# GetSystemUsage
 This function retrieves the current system's CPU, GPU, and Disk usage statistics.
 #### Function Signature
 ```python
@@ -1518,7 +1518,7 @@ for i, usage in enumerate(gpu_usages):
 for i, memory in enumerate(gpu_memory):
     print(f"GPU {i} Memory Usage: {memory}%")
 ```
-### GetConsoleHeight
+## GetConsoleHeight
 This function returns the height of the console in lines.
 #### Function Signature
 ```python
@@ -1530,7 +1530,7 @@ import abdutils as abd
 height = abd.GetConsoleHeight()
 print(f"Console Height: {height} lines")
 ```
-### ClearScreen
+# ClearScreen
 Clears the console screen.
 #### Function Signature
 ```python
@@ -1543,7 +1543,7 @@ import abdutils as abd
 
 abd.ClearScreen()
 ```
-### LookForKeys
+# LookForKeys
 The `LookForKeys` function is designed to handle proper program exit, ensuring the freeing of GPU resources. It sets up signal handlers to capture Ctrl+C and Ctrl+Z signals.
 
 #### Function Signature
@@ -1563,7 +1563,7 @@ abd.LookForKeys()
 
 *Note:* This function should be called at the beginning of your program to ensure the proper setup of signal handlers for graceful termination and resource management.
 
-### SelectGPU
+# SelectGPU
 The `SelectGPU` function automatically selects a GPU that is available and has the most free memory. This is particularly useful for optimizing GPU resource allocation in environments with multiple GPUs.
 
 #### Function Signature
@@ -1584,7 +1584,7 @@ if selected_gpu:
 *Note:* This function is ideal for scenarios where optimal GPU utilization is crucial, such as in machine learning or data processing tasks that are GPU-intensive. It simplifies the process of selecting the most appropriate GPU based on current memory availability.
 
 
-### ShowUsage
+# ShowUsage
 The `ShowUsage` function displays real-time system usage statistics, including CPU, GPU, and Disk usage. It's typically implemented to run in a separate thread, continuously updating these statistics on the console.
 
 #### Function Signature
