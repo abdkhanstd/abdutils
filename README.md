@@ -112,6 +112,13 @@ To install the `abdutils` package, you can use `pip`. Run the following command 
 - [ShowImage](#showimage-function)
 - [CV2PIL](#cv2pil-function)
 - [PIL2CV2](#pil2cv2-function)
+- [get_system_usage](#get_system_usage)
+- [get_console_height](#get_console_height)
+- [ClearScreen](#ClearScreen)
+- [ExitHandler](#ExitHandler)
+- [SelectGPU](#SelectGPU)
+- [LookForKeys](#LookForKeys)
+
 
 
 ## CreateFolder
@@ -1494,5 +1501,85 @@ In this example, the `PIL2CV2` function is used to convert a PIL Image to an Ope
 
 These utility functions (`ShowImage`, `CV2PIL`, and `PIL2CV2`) provide essential functionality for displaying images and performing conversions between common image formats, making them valuable tools for image processing and analysis tasks.
 
+### get_system_usage
+This function retrieves the current system's CPU, GPU, and Disk usage statistics.
+#### Function Signature
+```python
+def get_system_usage():
+```
+#### Example Usage
+```python
+import abdutils as abd
 
-You can further customize or expand upon this documentation to provide more examples or details about how to use these functions in different scenarios.
+cpu, gpu_usages, gpu_memory, disk = abd.get_system_usage()
+print(f"CPU Usage: {cpu}%, Disk Usage: {disk}%")
+for i, usage in enumerate(gpu_usages):
+    print(f"GPU {i} Usage: {usage}%")
+for i, memory in enumerate(gpu_memory):
+    print(f"GPU {i} Memory Usage: {memory}%")
+```
+### get_console_height
+This function returns the height of the console in lines.
+#### Function Signature
+```python
+def get_console_height():
+```
+#### Example Usage
+```python
+import abdutils as abd
+height = abd.get_console_height()
+print(f"Console Height: {height} lines")
+```
+### ClearScreen
+Clears the console screen.
+#### Function Signature
+```python
+def ClearScreen():
+```
+*No input parameters*
+#### Example Usage
+```python
+import abdutils as abd
+
+abd.ClearScreen()
+```
+### LookForKeys
+The `LookForKeys` function is designed to handle proper program exit, ensuring the freeing of GPU resources. It sets up signal handlers to capture Ctrl+C and Ctrl+Z signals.
+
+#### Function Signature
+```python
+def LookForKeys():
+```
+*No input parameters*
+
+#### Example Usage
+```python
+import abdutils as abd
+
+abd.LookForKeys()
+
+# Your program logic here...
+```
+
+*Note:* This function should be called at the beginning of your program to ensure the proper setup of signal handlers for graceful termination and resource management.
+
+### SelectGPU
+The `SelectGPU` function automatically selects a GPU that is available and has the most free memory. This is particularly useful for optimizing GPU resource allocation in environments with multiple GPUs.
+
+#### Function Signature
+```python
+def SelectGPU():
+```
+*No input parameters*
+
+#### Example Usage
+```python
+import abdutils as abd
+
+selected_gpu = abd.SelectGPU()
+if selected_gpu:
+    print(f"Automatically selected GPU: {selected_gpu.name}")
+```
+
+*Note:* This function is ideal for scenarios where optimal GPU utilization is crucial, such as in machine learning or data processing tasks that are GPU-intensive. It simplifies the process of selecting the most appropriate GPU based on current memory availability.
+
