@@ -5,16 +5,139 @@ import shutil
 import warnings
 import cv2
 import numpy as np
-from PIL import ImageFilter  # Import ImageFilter from PIL (Pillow)
+from PIL import ImageFilter, Image, ImageEnhance
 from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
 import inspect
 import sys
-from PIL import Image
-import os
+import random
 import glob
-import inspect
+import GPUtil
+import threading
+import time
+import signal
+import os
+import subprocess
+import threading
+import platform
 
+import threading
+import time
+import psutil
+import GPUtil
+import shutil
+
+# Function to get CPU, GPU, and Disk usage
+def GetSystemUsage():
+    cpu_usage = psutil.cpu_percent(interval=1)
+    gpus = GPUtil.getGPUs()
+    gpu_usages = [gpu.load * 100 for gpu in gpus] if gpus else ['N/A']
+    gpu_memory = [gpu.memoryUtil * 100 for gpu in gpus] if gpus else ['N/A']
+    disk_usage = psutil.disk_usage('/').percent
+    return cpu_usage, gpu_usages, gpu_memory, disk_usage
+
+# Function to get the current console height
+def GetConsoleHeight():
+    return shutil.get_terminal_size((80, 20)).lines
+
+# Function to update the system usage display
+def ShowSystemUsage():
+    while True:
+        console_height = GetConsoleHeight()
+        cpu, gpu_usages, gpu_memory, disk = GetSystemUsage()
+        gpu_usage_str = ' | '.join([f"GPU {i}: {usage:.2f}%" for i, usage in enumerate(gpu_usages)])
+        gpu_memory_str = ' | '.join([f"Memory {i}: {memory:.2f}%" for i, memory in enumerate(gpu_memory)])
+        system_info = f"CPU: {cpu}% | {gpu_usage_str} | {gpu_memory_str} | Disk: {disk}%"
+
+        # Move cursor to the bottom line and print the system info
+        print(f"\033[{console_height};0H\033[K{system_info}", end='', flush=True)
+
+        time.sleep(1)
+
+# Function to add a new message above the system usage
+def add_message(message):
+    console_height = GetConsoleHeight()
+    # Clear and move to the beginning of the line just above the bottom
+    print(f"\033[{console_height-1};0H\033[K", end='')
+    # Move up to make space for the new message
+    print(f"\033[1A{message}")
+
+# Start the system usage display in a separate thread
+def ShowUsage():
+    threading.Thread(target=ShowSystemUsage, daemon=True).start()
+    
+def ClearScreen():
+    # Check if the operating system is Windows
+    if platform.system().lower() == "windows":
+        os.system('cls')
+    else:
+        # For Unix and MacOS
+        os.system('clear')
+
+# Global flag to indicate whether the exit handler has been executed
+exit_handler_executed = False
+
+# Function to capture Ctrl+C and perform actions
+def ExitHandler(signum, frame):
+    global exit_handler_executed
+
+    if not exit_handler_executed:
+        exit_handler_executed=True
+        pid = os.getpid()
+        msg = f"[🛑 Interrupted] Stopping your code and Killing PID {pid}"
+        print(msg)
+        
+        # Perform your desired actions here
+        os.kill(os.getpid(), signal.SIGKILL)  # For example, terminate the process
+
+        # Run the 'kill -9' command to terminate the process
+        try:
+            subprocess.run(["kill", "-9", str(pid)], check=True)
+            
+        except subprocess.CalledProcessError as e:
+            msg = f"[🛑 Interrupt Error] {e}"
+            print(msg)
+
+        # Set the flag to indicate that the handler has been executed
+        exit_handler_executed = True
+            
+# Function to start Ctrl+C capture as a side daemon
+def LookForKeys():
+    # Set up a handler for Ctrl+C (SIGINT)
+            
+    signal.signal(signal.SIGINT, ExitHandler)
+    signal.signal(signal.SIGTSTP, ExitHandler)
+
+
+
+def SelectGPU():
+    
+    caller_filename, caller_line=get_caller_info()
+    try:
+        # Get a list of available GPUs
+        gpus = GPUtil.getGPUs()
+
+        if not gpus:
+            print("No GPUs found.")
+            return None
+
+        # Sort the list of GPUs by memory usage (ascending order)
+        gpus.sort(key=lambda gpu: gpu.memoryFree, reverse=True)
+
+        # Select the GPU with the least used memory (the first GPU in the sorted list)
+        selected_gpu = gpus[0]
+
+        msg=(f"🖥️🖥️ Selected GPU ID: {selected_gpu.id} {selected_gpu.name} (Free Memory: {selected_gpu.memoryFree} MB)")
+        ShowInfo(msg,caller_filename,caller_line)
+        
+        import os
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(selected_gpu.id)
+
+        return selected_gpu, selected_gpu.id
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 def HandleError(msg, caller_filename, caller_line):    
     print(f"[🚫 Error: {caller_filename}, line {caller_line}] " + msg)
@@ -45,12 +168,21 @@ def check_required_args():
         msg = f"The following input(s) /argument(s) are missing: {', '.join(missing_args)}"
         HandleError(msg, caller_filename, caller_line)
         
-        
+
+       
 def get_caller_info():    
     caller_frame = sys._getframe(2)
     caller_line = caller_frame.f_lineno
     caller_filename = caller_frame.f_globals.get('__file__')
     return caller_filename, caller_line
+
+
+
+def PrintObject(obj):    
+    # Print all attributes of the results object
+    for attr in dir(obj):
+        if not attr.startswith('_'):
+            print(f"{attr}: {getattr(obj, attr)}")
 
 
 
@@ -962,7 +1094,9 @@ def GaussianBlurImage(image=None, sigma=1.0, verbose=True):
             HandleError(msg,caller_filename, caller_line)
         
         if verbose:
-            print(f"Applying Gaussian blur with sigma={sigma}...")
+            msg=(f"Applying Gaussian blur with sigma={sigma}...")
+            ShowInfo(msg,caller_filename, caller_line)
+
         
         blurred_image = image.filter(ImageFilter.GaussianBlur(sigma))
         return blurred_image
@@ -1030,7 +1164,8 @@ def SharpenImage(image=None, factor=2.0, verbose=True):
             HandleError(msg,caller_filename, caller_line)
         
         if verbose:
-            print(f"Sharpening image with factor={factor}...")
+            msg=(f"Sharpening image with factor={factor}...")
+            ShowInfo(msg,caller_filename, caller_line)
         
         enhancer = ImageEnhance.Sharpness(image)
         sharpened_image = enhancer.enhance(factor)
@@ -1271,3 +1406,87 @@ def PIL2CV2(pil_image=None):
         msg = f"Error converting from PIL to OpenCV: {str(e)}"
         HandleError(msg, caller_filename, caller_line)
         return None
+    
+    
+def copy_brighter_pixels(np_img1, np_img2):
+    """
+    Takes two numpy arrays representing images, compares their pixel brightness, 
+    and copies the brighter pixels from image 2 to image 1.
+    
+    :param np_img1: Numpy array of the first image (destination)
+    :param np_img2: Numpy array of the second image (source)
+    :return: Numpy array of the modified first image
+    """
+    # Calculate the brightness of each pixel using the luminosity method
+    brightness_img1 = np_img1[..., 0]*0.2989 + np_img1[..., 1]*0.5870 + np_img1[..., 2]*0.1140
+    brightness_img2 = np_img2[..., 0]*0.2989 + np_img2[..., 1]*0.5870 + np_img2[..., 2]*0.1140
+
+    # Create a mask where the brightness of img2 is greater than img1
+    mask = brightness_img2 > brightness_img1
+
+    # Copy brighter pixels from np_img2 to np_img1
+    np_img1[mask] = np_img2[mask]
+
+    return np_img1
+
+def copy_brighter_pixels_percentage(np_img1, np_img2, percentage=50):
+    # Check if images have three dimensions (height, width, channels)
+    if np_img1.ndim != 3 or np_img2.ndim != 3:
+        raise ValueError("Both images must have three dimensions [height, width, channels]")
+    
+    # Check if both images have the same shape
+    if np_img1.shape != np_img2.shape:
+        raise ValueError("Both images must have the same shape")
+    
+    # Calculate the brightness of each pixel using the luminosity method
+    brightness_img1 = np.sum(np_img1 * [0.2989, 0.5870, 0.1140], axis=2)
+    brightness_img2 = np.sum(np_img2 * [0.2989, 0.5870, 0.1140], axis=2)
+
+    # Create a mask where the brightness of img2 is greater than img1
+    mask = brightness_img2 > brightness_img1
+
+    # Get the indices of the mask where the condition is True
+    brighter_indices = np.argwhere(mask)
+
+    # Determine the number of pixels to copy over
+    num_pixels_to_copy = int(len(brighter_indices) * (percentage / 100.0))
+
+    # Select a random subset of these indices
+    selected_indices = np.random.choice(len(brighter_indices), size=num_pixels_to_copy, replace=False)
+
+    # Copy the selected brighter pixels from np_img2 to np_img1
+    for idx in selected_indices:
+        np_img1[tuple(brighter_indices[idx])] = np_img2[tuple(brighter_indices[idx])]
+
+    return np_img1
+
+
+def create_brighter_image(np_img1, np_img2):
+    """
+    Takes two numpy arrays representing images, compares them pixel by pixel across
+    all channels, and creates a new image array with the brighter pixels from each image.
+    
+    :param np_img1: Numpy array of the first image
+    :param np_img2: Numpy array of the second image
+    :return: Numpy array of the resultant image
+    """
+    # Calculate the brightness of each pixel using the luminosity method
+    brightness_img1 = np_img1[..., 0]*0.2989 + np_img1[..., 1]*0.5870 + np_img1[..., 2]*0.1140
+    brightness_img2 = np_img2[..., 0]*0.2989 + np_img2[..., 1]*0.5870 + np_img2[..., 2]*0.1140
+
+    # Create a mask where the brightness of img1 is greater than img2
+    mask = brightness_img1 > brightness_img2
+
+    # Initialize an empty image array with the same shape and type as np_img1/np_img2
+    result_image = np.zeros_like(np_img1)
+
+    # Use the mask to select pixels from np_img1 and np_img2
+    result_image[mask] = np_img1[mask]    # If img1 is brighter, take from img1
+    result_image[~mask] = np_img2[~mask]  # Else, take from img2
+
+    # Convert the result to uint8 if needed
+    result_image_uint8 = result_image.astype(np.uint8)
+
+    return result_image_uint8
+            
+    
