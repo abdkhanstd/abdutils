@@ -1,4 +1,4 @@
-__version__ = '0.1'
+__version__ = '0.2'
 # https://github.com/abdkhanstd/abdutils
 import os
 import shutil
@@ -28,7 +28,7 @@ import GPUtil
 import shutil
 
 # Function to get CPU, GPU, and Disk usage
-def GetSystemUsage():
+def get_system_usage():
     cpu_usage = psutil.cpu_percent(interval=1)
     gpus = GPUtil.getGPUs()
     gpu_usages = [gpu.load * 100 for gpu in gpus] if gpus else ['N/A']
@@ -37,14 +37,14 @@ def GetSystemUsage():
     return cpu_usage, gpu_usages, gpu_memory, disk_usage
 
 # Function to get the current console height
-def GetConsoleHeight():
+def get_console_height():
     return shutil.get_terminal_size((80, 20)).lines
 
 # Function to update the system usage display
-def ShowSystemUsage():
+def update_system_usage():
     while True:
-        console_height = GetConsoleHeight()
-        cpu, gpu_usages, gpu_memory, disk = GetSystemUsage()
+        console_height = get_console_height()
+        cpu, gpu_usages, gpu_memory, disk = get_system_usage()
         gpu_usage_str = ' | '.join([f"GPU {i}: {usage:.2f}%" for i, usage in enumerate(gpu_usages)])
         gpu_memory_str = ' | '.join([f"Memory {i}: {memory:.2f}%" for i, memory in enumerate(gpu_memory)])
         system_info = f"CPU: {cpu}% | {gpu_usage_str} | {gpu_memory_str} | Disk: {disk}%"
@@ -56,7 +56,7 @@ def ShowSystemUsage():
 
 # Function to add a new message above the system usage
 def add_message(message):
-    console_height = GetConsoleHeight()
+    console_height = get_console_height()
     # Clear and move to the beginning of the line just above the bottom
     print(f"\033[{console_height-1};0H\033[K", end='')
     # Move up to make space for the new message
@@ -64,7 +64,7 @@ def add_message(message):
 
 # Start the system usage display in a separate thread
 def ShowUsage():
-    threading.Thread(target=ShowSystemUsage, daemon=True).start()
+    threading.Thread(target=update_system_usage, daemon=True).start()
     
 def ClearScreen():
     # Check if the operating system is Windows
@@ -1428,6 +1428,9 @@ def copy_brighter_pixels(np_img1, np_img2):
     np_img1[mask] = np_img2[mask]
 
     return np_img1
+
+import numpy as np
+from PIL import Image
 
 def copy_brighter_pixels_percentage(np_img1, np_img2, percentage=50):
     # Check if images have three dimensions (height, width, channels)
