@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='abdutils',
-    version='0.1',
+    version='0.2',
     description='A Python utility module that enhances the ease and reliability of Python programming.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
