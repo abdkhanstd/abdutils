@@ -19,5 +19,6 @@ setup(
         'opencv-python>=4.8.1.78',
         'matplotlib>=3.7.3',
         'numpy>=1.23.1',
+        'GPUtil'
     ],
 )
