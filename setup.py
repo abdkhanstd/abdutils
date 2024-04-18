@@ -15,7 +15,7 @@ setup(
         'License :: OSI Approved :: MIT License',
     ],
     install_requires=[
-        'Pillow>=9.1.0',
+        'Pillow,
         'opencv-python>=4.8.1.78',
         'matplotlib>=3.7.3',
         'numpy>=1.23.1',
