@@ -19,6 +19,11 @@ Are you tired of dealing with complex Python libraries and struggling with uncle
 ## Getting Started
 
 To get started with `abdutils`, you can install it easily using `pip`. Here's how:
+```bash
+pip install abdutils
+
+```
+or directly from GitHub
 
 ```bash
 pip install --upgrade git+https://github.com/abdkhanstd/abdutils.git
